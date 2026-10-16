@@ -12,6 +12,7 @@ These are my custom skills for [Claude Code](https://claude.com/claude-code). Ea
 | `edit-pr` | Rewrites the title and the description of a pull request in the same format. |
 | `create-issue` | Opens a GitHub issue in a team format and sets the type, the labels and the project fields. |
 | `issues-version` | Sets the release version on shipped issues and moves them out of the testing columns. |
+| `release-notes` | Drafts the release notes for the next release from the PRs since the last tag. |
 | `do-tests` | Runs only the checks for the changed code, or the full gate, with memory limits. |
 | `do-screenshots` | Takes a headless Playwright screenshot of a UI change and reports it in a table. |
 | `qa-verification` | Checks a change through the real user workflow and records the evidence. |

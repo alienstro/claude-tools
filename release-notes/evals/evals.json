@@ -1,0 +1,17 @@
+{
+  "skill_name": "release-notes",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "hey can you draft the release notes for the next release? everything on dev since the last tag. also put it up as a github draft release when it's ready",
+      "expected_output": "A draft for 1.7.0 (1.6.0..origin/dev) in the 1.6.0 format, a title with themes, a list of skipped PRs, and a request for approval before the draft release, with the gh release create --draft command and the publish-after-merge caution.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Pretend 1.6.0 has not been released yet. Write the release notes for 1.6.0 from scratch (the changes between the 1.5.0 and 1.6.0 tags). Do not read the published 1.6.0 release body or the body of PR #800, I want to compare your draft with what we published.",
+      "expected_output": "A draft for 1.6.0 covering #781, #785, #788, #792, #794, #798, #799 and #773, in the 1.5.0 format, with a database changes bullet for three migrations.",
+      "files": []
+    }
+  ]
+}

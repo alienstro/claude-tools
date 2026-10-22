@@ -1,6 +1,6 @@
 ---
-name: release-notes
-description: Use when the user wants a draft of release notes for the next release, or for a release that is already tagged. Reads the previous release tags and notes, collects the PRs since the last tag, and writes notes in the same format as the earlier releases (Features, Bug Fixes, Reliability and Maintenance, with PR numbers), plus the release title and the next version number. Then offers a GitHub draft release. Use it when the user says "/release-notes", "draft the release notes", "write the changelog for 1.7.0", "what goes in the next release", "prepare the release", "notes for the release PR", or "what changed since the last release", even if they do not say "release notes".
+name: create-release-notes
+description: Use when the user wants a draft of release notes for the next release, or for a release that is already tagged. Reads the previous release tags and notes, collects the PRs since the last tag, and writes notes in the same format as the earlier releases (Features, Bug Fixes, Reliability and Maintenance, with PR numbers), plus the release title and the next version number. Then offers a GitHub draft release. Use it when the user says "/create-release-notes", "draft the release notes", "write the changelog for 1.7.0", "what goes in the next release", "prepare the release", "notes for the release PR", or "what changed since the last release", even if they do not say "release notes".
 user-invocable: true
 allowed-tools: Bash, Read, Write
 ---

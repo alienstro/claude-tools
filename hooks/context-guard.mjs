@@ -174,6 +174,18 @@ try {
     } catch {
       // Keep the empty handle.
     }
+    // `--focus` alone did not show the new tab in a live test, so switch to it too.
+    if (handle.startsWith('term_')) {
+      try {
+        execFileSync(process.env.ORCA_CLI_COMMAND || 'orca', ['terminal', 'switch', '--terminal', handle, '--json'], {
+          cwd,
+          timeout: 5_000,
+          stdio: 'ignore',
+        });
+      } catch {
+        // The handoff still worked; the owner can open the tab by hand.
+      }
+    }
     handle ||= 'unknown handle';
     writeFileSync(marker, `${handle}\n`);
     block(`${head} Handed off to a new Claude (${handle}) with your prompt. Close this tab.`);

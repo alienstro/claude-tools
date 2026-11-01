@@ -64,8 +64,7 @@ Never skip the report or the table. These cases still need both:
 Put the table under the heading `### Before / Now`. Before you start the next step or end the turn, check that the reply has that heading and the header row `| | Before this change | Now (tested) |`. If it does not, add the table first.
 
 1. Search the output for `✖`, `✕`, `FAIL`, `ERROR` and `error TS`.
-2. Name the mode that you ran. In changed mode, list the test files that you ran.
-3. Name each failed check and its first error. If a failure is outside the changed code, say so, and do not call it a regression without a run on the base branch.
+2. Name the mode that you ran. In changed mode, list the test files that you ran.3. Name each failed check and its first error. If a failure is outside the changed code, say so, and do not call it a regression without a run on the base branch.
 4. Never say "pass" without the summary line of the runner, such as `ℹ pass N` / `ℹ fail 0` or `Tests: N passed`.
 5. Always write a "Before / Now" table of what the change does, in both modes. Use one row for each behaviour that the branch changes. Use the format below.
 

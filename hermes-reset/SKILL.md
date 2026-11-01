@@ -9,7 +9,7 @@ user-invocable: true
 Use this skill when the owner asks to reset Hermes memory, sessions, or history, or to start fresh.
 The reset puts Hermes back to the state before CitizenAI setup, so the next setup is a first-time setup.
 
-The argument is the SSH target of the Hermes host, for example `ssh user@hermes-host`.
+The argument is the SSH target of the Hermes host, for example `ssh robinx@ubuntu-robin`.
 Run each script on that host with `ssh <target> 'bash -s' <<'EOF' ... EOF`.
 
 ## Safety rules

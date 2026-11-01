@@ -1,9 +1,9 @@
 ---
-name: qa-issue
-description: Use when the user wants a closed or fixed GitHub issue checked on a live staging site, in a real browser, through the Chrome DevTools MCP. Read the issue and its fix PR, plan the checks, stop each write request inside the page so the shared environment does not change, take a screenshot while each action runs and after it ends, check the state again after a reload, and report a results table with the screenshots in chat. Use it when the user says "/qa-issue", "test this issue on staging", "can you test it yourself", "do it by yourself via chrome dev tools", "QA this fix", "check if #123 works on staging", or pastes an issue URL and asks how to test it, even if they do not name the browser or the MCP.
+name: qa-issue-ui
+description: Use when the user wants a closed or fixed GitHub issue checked on a live staging site, in a real browser, through the Chrome DevTools MCP. Read the issue and its fix PR, plan the checks, stop each write request inside the page so the shared environment does not change, take a screenshot while each action runs and after it ends, check the state again after a reload, and report a results table with the screenshots in chat. Use it when the user says "/qa-issue-ui", "test this issue on staging", "can you test it yourself", "do it by yourself via chrome dev tools", "QA this fix", "check if issue 123 works on staging", or pastes an issue URL and asks how to test it, even if they do not name the browser or the MCP. For a backend fix that has no page to click, use `qa-issue-api` instead.
 ---
 
-# QA an issue on staging
+# QA a UI issue on staging
 
 Check that a fix works on a live staging site, and prove it with screenshots, without a change to the data that other people use.
 

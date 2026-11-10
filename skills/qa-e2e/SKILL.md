@@ -1,6 +1,6 @@
 ---
 name: qa-e2e
-description: Use when the user wants one issue or many issues tested end to end on a live test environment, with each result proved and recorded. Takes an issue number, a list of issues, or a testing status of a GitHub Project board (such as "For Testing" or "Ready for QA"). Confirms that the test environment runs each fix, tests each fix on its real surface (web page in a browser, desktop or chat app through computer use, mobile simulator, API, CLI, background job, or logs and queries for code with no page). A live test is required for each issue: regression tests support a verdict but never replace the live check. It posts a comment with a results table, screenshots and text evidence on each issue, and moves each issue to the pass status (such as "For Release") or the fail status (such as "Failed Testing"). Can also give only the manual test steps of an issue when the user wants to run them by hand. Use it when the user says "/qa-e2e", "QA the For Testing column", "test all the issues waiting for QA", "QA the board", "test issue 123 end to end", "how can we test this", "give me the e2e steps", or pastes an issue or board URL and asks to test it, even if they do not name a surface or a status.
+description: Use when the user wants one issue or many issues tested end to end on a live test environment, with each result proved and recorded. Takes an issue number, a list of issues, or a testing status of a GitHub Project board (such as "For Testing" or "Ready for QA"). Confirms that the test environment runs each fix, tests each fix on each screen that it touches (web page in a browser, desktop or chat app, mobile simulator, API, CLI, background job, or logs and queries for code with no page), with the best tool that the session has (Playwright, the debug port, Chrome DevTools MCP, Claude in Chrome, computer use, a simulator). A live test is required for each issue: regression tests support a verdict but never replace the live check. It posts a comment with a results table, at least one live screenshot of each result, and text evidence on each issue, and moves each issue to the pass status (such as "For Release") or the fail status (such as "Failed Testing"). Can also give only the manual test steps of an issue when the user wants to run them by hand. Use it when the user says "/qa-e2e", "QA the For Testing column", "test all the issues waiting for QA", "QA the board", "test issue 123 end to end", "how can we test this", "give me the e2e steps", or pastes an issue or board URL and asks to test it, even if they do not name a surface or a status.
 user-invocable: true
 argument-hint: "[Issue #42 | issue URL | PR URL | board URL] (empty = find testable issues)"
 ---
@@ -14,6 +14,7 @@ Test each issue on its real surface. Prove each result in a comment on the issue
 1. Read `team.local.md` in this skill folder, if it exists. It holds the values of each project: the board, the statuses, the test environment, the surface profiles, the evidence branch, the test commands and the team rules. Keep it out of a public repository.
 2. If it does not exist, or the current repository is not in it, ask the user for: the board (owner and project number) or the issue list, the test status, the pass and fail statuses, the test environment and how to read its build, and the surfaces to use. Offer to save the answers as a new section of `team.local.md`.
 3. Read `references/surfaces.md` once. It says how to test and prove each kind of surface.
+4. Read `references/screens-and-tools.md` once. It says how to list every screen of a change, how to find the tools of this session, and which tool to use first for each surface.
 
 Below, `$S` is this skill's `scripts/` folder, and `$W` is a new folder in your scratchpad (`$W/ev` for screenshots, `$W/final` for comments).
 
@@ -48,6 +49,9 @@ For a single issue with no board, skip the status move and post only the comment
 ## Rules
 
 - **Test each issue live. This is required.** Each issue gets at least one live check on the test environment that shows the expected result of the issue. Regression tests and the code at HEAD support a verdict, but they never replace the live check. An issue with no live check cannot pass.
+- **Show each result on each screen. This is required.** Make the screen list of each issue (`references/screens-and-tools.md`). Each row of the list gets a screenshot of its live result, on every surface, with no exception. There is no limit on the number of rows.
+- **Use the tools that this session has.** Find them first, then use the tool order in `references/screens-and-tools.md`. If a tool fails two times, use the next one. Each result names its tool. Text proof supports the screenshot, but it never replaces it. See **Screen proof for every surface** in `references/surfaces.md`.
+- **Open any application that you need for the screen proof.** The user allows you to drive their desktop through computer use (`$S/app.sh`). Open, start or focus any application that can show the live result. Run one GUI test at a time.
 - **Never type a password, a card number, a token or another secret.** If a sign-in page shows, stop and ask the user. The user's own rules can add a test-account exception; follow them.
 - **Do not spend money.** Never approve a purchase, a payment, a wallet send or a paid call. Cancel each such prompt. Get test credit only through the free path that `team.local.md` names.
 - **Do not change shared data that you do not own.** Use read-only checks, or test data that you make and name `qa<issue>`. List all test data for the user at the end.
@@ -96,7 +100,7 @@ For each issue, read the issue, its expected result, and the fix PR summary. A P
 
 The "live steps" field is never empty. Each live step is an action on the test environment and the exact result that you expect to see.
 
-Choose the surface from `references/surfaces.md`. For a backend fix, also find a page that shows its result: an admin or ops console page, a settings row, a list of records, a public page. Write "none" only when no page shows it. A fix with no page still needs a live step (see **Make the live state** below). Group issues that share one setup, so that one setup serves several checks (one open approval, one test record, one signed-in page).
+Choose the surfaces from `references/surfaces.md`. Then make the screen list from `references/screens-and-tools.md`, with the tool of each row, and put it in the plan. For a backend fix, also find a page that shows its result: an admin or ops console page, a settings row, a list of records, a public page. When no page shows it, write the application that you open for the screen proof instead. A fix with no page still needs a live step (see **Make the live state** below). Group issues that share one setup, so that one setup serves several checks (one open approval, one test record, one signed-in page).
 
 ### 4. Split the work
 
@@ -105,6 +109,7 @@ Choose the surface from `references/surfaces.md`. For a backend fix, also find a
 | Code at HEAD, regression tests, read-only API and log checks | Subagents (if allowed), 7 to 9 issues each, with `references/subagent-brief.md` |
 | A web page | A subagent with its own browser tab, or you |
 | Desktop app, chat app, simulator (computer use) | **You.** One desktop runs one GUI |
+| Screen proof of a fix with no page (any application, through computer use) | **You.** One desktop runs one GUI |
 | The code half of your GUI issues | One more subagent, so that your comments also carry test evidence |
 
 Each subagent writes one comment file per issue and posts nothing. You review, post and move. For one or two issues, do it all yourself.
@@ -115,9 +120,9 @@ Follow `references/surfaces.md` for each surface. Short form:
 
 - **Web:** a new tab of your own; page text, a zoomed screenshot saved to disk, the request status.
 - **App through computer use:** `$S/app.sh <app> send|wait|shot|tap|key ...`. Read each shot with the Read tool before you use it.
-- **API, CLI, job:** read-only requests and queries; show the request and the response as text.
+- **API, CLI, job:** read-only requests and queries; show the request and the response as text. Then take the screen proof in any application that shows the result.
 - **Backend fix with a page that shows its result:** do the text checks, then open that page read-only and take a screenshot of the region that shows the result (the new setting, the new record, the new column). Text proves the behaviour, and the screenshot lets a reviewer see it. Do not click a write control to get the shot.
-- **No visible surface** (a refactor, removed code, a timer, an internal rule): make the behaviour happen on the test environment, then prove it with the closest live signal. Use log lines since the deploy, read-only queries, the API, or a console page. For removed or replaced code, prove live that the old symptom (the error, the log line, the failed call) no longer occurs after the deploy, and that the path that replaces it works.
+- **No visible surface** (a refactor, removed code, a timer, an internal rule): make the behaviour happen on the test environment, then prove it with the closest live signal. Use log lines since the deploy, read-only queries, the API, or a console page. For removed or replaced code, prove live that the old symptom (the error, the log line, the failed call) no longer occurs after the deploy, and that the path that replaces it works. Then take a screenshot of that signal in any application that shows it.
 
 **Make the live state.** When the live state is hard to reach (a long wait, a rare condition, a large input), make it. Do not fall back to tests only.
 
@@ -125,7 +130,7 @@ Follow `references/surfaces.md` for each surface. Short form:
 - Change a test-environment setting for a short time, for example a timeout or a threshold. Ask the user first, because the change affects all users of the environment. Record the old value, and restore it when the test ends.
 - Ask the user to do a step that you cannot do (a sign-in, a real device, a payment, a message to real people).
 
-**Add every proof that you can get.** Each comment carries all the evidence that exists for its issue: screenshots of each screen or page that shows the result, and the text proof (requests and responses, query counts, log lines, test summaries). When both exist, add both. A screenshot that shows nothing new (an empty list, a total with no matching record) proves nothing. Leave it out and say why. Before you upload a shot, read it, crop it to the region under test, and mask phone numbers, emails and other people's data.
+**Add every proof that you can get.** Each comment carries at least one screenshot of the live result, and all the other evidence that exists for its issue: screenshots of each screen or page that shows the result, and the text proof (requests and responses, query counts, log lines, test summaries). When both exist, add both. A screenshot that shows nothing new (an empty list, a total with no matching record) proves nothing. Leave it out and say why. Before you upload a shot, read it, crop it to the region under test, and mask phone numbers, emails and other people's data.
 
 **Put a red box on the proof.** Each screenshot shows a red box around the element that proves the result: the new row, the message, the button, the error text. A reviewer then sees the proof without a search. Draw one box for each point of proof, and no more than three boxes in one shot.
 
@@ -144,9 +149,9 @@ Poll for a slow reply with `app.sh ... wait`. Do not chain `sleep` commands.
 
 ### 6. Decide each verdict
 
-- **PASS:** the fix is on the environment, its regression tests pass, and the live check gives the expected result. All three are required.
+- **PASS:** the fix is on the environment, its regression tests pass, the live check gives the expected result, and a screenshot shows that result. All four are required.
 - **FAIL:** an expected result from the issue does not happen. Also fail when the reported symptom shows on another path in the same build, and give that path's exact steps.
-- **BLOCKED:** the live check cannot run, even after you try each way in **Make the live state**. Comment what passed and the open live step, leave the status, and tell the user what the live step needs. Never pass an issue on tests alone.
+- **BLOCKED:** the live check cannot run, or no screenshot can show its result, even after you try each way in **Make the live state** and each screen proof. Comment what passed and the open live step, leave the status, and tell the user what the live step needs. Never pass an issue on tests alone.
 - **Note:** a new problem that the issue does not cover. Put it under "Notes" in the comment. It does not fail the issue.
 
 ### 7. Post the proof
@@ -165,7 +170,21 @@ If the repository has no evidence branch, ask the user before you make one (an o
 
 ### 8. Report and clean up
 
-Tell the user:
+1. Write `$W/report.md`: the results table of all issues, then one section for each issue with its comment text (from `$W/final`), the link to the posted comment, and the full path of each screenshot.
+2. Make the contact sheet of all marked shots, and read it with the Read tool:
+
+   ```bash
+   python3 $S/contact_sheet.py $W/ev $W/contact-sheet.png
+   ```
+
+3. End the reply with these two lines, with the full absolute paths. Do not shorten them:
+
+   ```
+   - Report: <$W>/report.md
+   - Contact sheet: <$W>/contact-sheet.png
+   ```
+
+Also tell the user:
 - the issues that passed, in a table grouped by area;
 - each failed issue, with its failed step in one sentence;
 - each blocked issue, with its open step;

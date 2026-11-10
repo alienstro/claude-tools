@@ -9,7 +9,7 @@ allowed-tools: Bash, Read
 
 Rewrite an existing pull request in place: a title with a conventional-commit prefix, and a
 body that is a short summary — a lead line, an old/new behaviour table, at most five
-one-sentence bullets — then, for a UI change, a Before and After screenshot table, then a table of lines added per area. Nothing else. Write it in simple, everyday words for a reader who does not know the code. Say what changes for a user, an owner, or an operator, and why. Do not name files, folders, functions, classes, variables, endpoints, env vars, or other code names. The diff carries those.
+one-sentence bullets — then, when any screen changes, a Before and After screenshot table of each screen, then a table of lines added per area. Nothing else. Write it in simple, everyday words for a reader who does not know the code. Say what changes for a user, an owner, or an operator, and why. Do not name files, folders, functions, classes, variables, endpoints, env vars, or other code names. The diff carries those.
 
 Never opens a new PR. If the branch has none, stop and point at `/create-pr`.
 
@@ -33,13 +33,14 @@ Never opens a new PR. If the branch has none, stop and point at `/create-pr`.
      defaults inside the diff — the *why* usually lives there, not in the commits.
    - The PR's current title and body are reference only. You are replacing them, and they
      may describe an older, narrower version of the branch.
-   - Screenshots: if the diff changes a UI, take the Before and After shots now (see "Screenshots").
-     Shoot again after each new UI commit: an old After shot shows an old version.
+   - Screenshots: if the diff changes any screen, make the screen list and take the Before and
+     After shots of each screen now (see "Screenshots"). Shoot again after each new UI commit:
+     an old After shot shows an old version.
 4. Write the new title and body in the format below.
 5. Show the proposed title and body to the user and confirm before applying — the user drives
    git history. Flag anything unusual (scope that outgrew the old title, wrong base,
    unrelated commits).
-6. Apply: `gh pr edit <number> --title "<title>" --body "<body>"`. For a UI change, use
+6. Apply: `gh pr edit <number> --title "<title>" --body "<body>"`. When a screen changes, use
    `--body-file` and one `--attach` per screenshot (see "Screenshots").
 7. If reading the diff surfaced something a reviewer genuinely needs to know (a risky
    dependency, a stale doc, a follow-up, work that is committed but not deployed), say it to
@@ -60,7 +61,7 @@ and leave the other untouched.
 
 ## Body
 
-The body is exactly one section with two tables, or three for a UI change (the `##` heading is literal — include it):
+The body is exactly one section with two tables, or three when a screen changes (the `##` heading is literal — include it):
 
 ```
 ## Summary
@@ -77,7 +78,7 @@ One line naming what this PR is fundamentally about — the change it exists to 
 | Before | After |
 | --- | --- |
 | ![Before: <screen>](./before-<screen>.png) | ![After: <screen>](./after-<screen>.png) |
-| (one row per changed screen, up to four; leave the table out when no UI changed) | ... |
+| (one row per screen of the screen list, with no limit; leave the table out when no screen changed) | ... |
 
 | Area | Lines added |
 | --- | --- |
@@ -92,23 +93,37 @@ file lists.
 
 ## Screenshots
 
-A PR that changes what a person sees in a UI carries a Before and an After screenshot of each
-changed screen. A reviewer judges a UI change from the pictures, not from the class names in
-the diff. Leave the table out when the PR changes no UI.
+A PR that changes what a person sees on any screen carries a Before and an After screenshot of
+each screen that the change touches. A reviewer judges a UI change from the pictures, not from
+the class names in the diff. Leave the table out only when no screen changes.
 
-1. Find each changed screen from the diff: a component, a page, copy, or a theme value that
-   renders. Pick at most four screens, the ones closest to the soul of the change.
-2. Take the After shot from `HEAD` with `/do-screenshots`. Use fake data only, and keep the
-   script, the data, and the viewport in the scratchpad.
+A screen is any place where a person sees the change: a web page, the desktop app window, a
+mobile screen, a chat reply, an email. An API, a config, or a flag change that alters what a
+page shows also changes that page.
+
+1. Make the screen list with `~/.claude/skills/qa-e2e/references/screens-and-tools.md`:
+   each surface, platform, way in, state, role, theme, width and control screen that the
+   change touches. Each row gets one pair. There is no limit on the number of pairs. Put the
+   pairs closest to the soul of the change first. Show the screen list to the user, with a
+   "Not affected" line for each skipped axis.
+2. Take the After shot from `HEAD`. Use fake data only, and keep the script, the data, and the
+   viewport in the scratchpad.
+   - Pick the tool for each screen from the tool order in `screens-and-tools.md`. Use the
+     tools that this session has, and use the same tool for the Before and the After shot.
+   - For a web screen, use `/do-screenshots`.
+   - For a desktop app screen, start the app from the worktree with its debug port, and use
+     the debug port or Orca computer use (see `screens-and-tools.md`).
 3. Take the Before shot from the PR base. Make a worktree of the merge base in the scratchpad
    (`git worktree add <scratchpad>/base $(git merge-base origin/<base> HEAD)`), install it
    with `pnpm install --frozen-lockfile --prefer-offline`, and run the same script, the same
    data, and the same viewport against it. Remove the worktree after the shot
    (`git worktree remove <scratchpad>/base`).
-4. Run one dev server at a time, and stop each one after its shot.
+4. Run one dev server for each part at a time, and stop each one after its shots.
 5. Read every PNG with the Read tool before you put it in the PR. A shot that shows a spinner,
    a sign-in page, or a broken image is not a Before or an After: fix the script and shoot again.
 6. Name the files `before-<screen>.png` and `after-<screen>.png` in one folder.
+7. If you cannot get a good pair for a screen after two tries, STOP and tell the user which
+   screen failed and why. Do not drop the screen, and do not put a placeholder in the table.
 
 WARNING: `--attach` uploads each image to GitHub, and every person with access to the
 repository can open it. Never shoot a real account, a real token, an email address, or
@@ -239,8 +254,8 @@ Agents no longer wake the database just to report that they are still running.
 
 ## Rules
 
-- A PR that changes a UI shows a Before and an After screenshot of each changed screen (see
-  "Screenshots"). A reviewer cannot judge a layout, a color, or a cut-off text from a diff.
+- A PR that changes any screen shows a Before and an After screenshot of each screen that the
+  change touches, with no limit on the number (see "Screenshots"). A reviewer cannot judge a layout, a color, or a cut-off text from a diff.
 - Lead with WHY, not just WHAT. A move, rename, or refactor is often in service of a
   performance or cost win (fewer database queries, letting the database scale to zero,
   caching, fewer requests) — find that purpose in the code comments, docstrings, and test

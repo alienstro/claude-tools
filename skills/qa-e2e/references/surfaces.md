@@ -1,17 +1,19 @@
 # Surfaces: how to test and prove each kind of fix
 
-Pick the surface from the issue and the files that the fix PR changes. One issue can need two surfaces (for example, a console page and the API behind it).
+Pick the surface from the issue and the files that the fix PR changes. One issue can need two surfaces or more (for example, a console page, the desktop app, and the API behind them).
 
-| Surface | Tool | Proof |
+Before you test, read `screens-and-tools.md` in this folder. It makes the full screen list (each surface, platform, way in, state, role, theme, width and control screen), finds the tools of this session, and gives the tool order for each surface. Each row of the screen list gets its own screenshot. The "Main tool" column below is only the first choice.
+
+| Surface | Main tool | Proof |
 |---|---|---|
-| Web page or web app | Claude in Chrome (signed-in session), Chrome DevTools MCP, or Playwright (headless, clean session) | Cropped screenshots, page text, network status of the request |
-| Desktop app (native, Electron) | `scripts/app.sh` (Orca computer use) | Cropped screenshots, accessibility tree text |
+| Web page or web app | Playwright (headless, clean session), Chrome DevTools MCP, or Claude in Chrome (signed-in session) | Cropped screenshots, page text, network status of the request |
+| Desktop app (native, Electron) | The debug port (CDP or Playwright) for the page; `scripts/app.sh` (Orca computer use) for the window, menus and OS dialogs | Cropped screenshots, page state or accessibility tree text |
 | Chat app (Telegram, WhatsApp, Slack, Discord desktop) | `scripts/app.sh` on the desktop client | Screenshots cropped to the chat pane, exact reply text |
 | Mobile app | iOS Simulator or Android emulator window through `app.sh`; `adb` / `xcrun simctl io booted screenshot` | Screenshots, logcat lines |
-| HTTP API, webhook, MCP tool | `curl -s -w ' HTTP %{http_code}'`, the MCP client | Request and response (status and trimmed body) as text |
-| CLI or script | The shell | Command and output as text |
-| Background job, timer, migration | Trigger or wait for the job on the test environment, then logs and read-only database queries | Log lines and counts from the live run, plus the test summary |
-| Refactor or removed code | The live path that the change touches, and the logs since the deploy | The old symptom absent after the deploy, the new path working, plus the test summary and `file:line` |
+| HTTP API, webhook, MCP tool | `curl -s -w ' HTTP %{http_code}'`, the MCP client | Request and response (status and trimmed body) as text, plus a screenshot of the result |
+| CLI or script | The shell, then any application that shows the result | Command and output as text, plus a screenshot of the result |
+| Background job, timer, migration | Trigger or wait for the job on the test environment, then logs and read-only database queries | Log lines and counts from the live run, plus the test summary, plus a screenshot of the result |
+| Refactor or removed code | The live path that the change touches, and the logs since the deploy | The old symptom absent after the deploy, the new path working, plus the test summary and `file:line`, plus a screenshot of the result |
 | Email or SMS | The provider's inbox or log; a real device when the user can help | Screenshot of the received message, provider status |
 
 ## Web page
@@ -51,6 +53,18 @@ $S/app.sh <app> tap 810 1770                # click a point read from the last s
 - To edit your last message in many chat apps: `key Up`, `hotkey CmdOrCtrl+A`, `type "<new text>"`.
 - One desktop runs one GUI test at a time. Do not give GUI work to parallel agents.
 - Before the first shot, look at the whole window once. If it shows secrets (keys, passwords, tokens), close that view or crop it out, and never upload that shot.
+
+## Screen proof for every surface
+
+Each issue needs a screenshot of its live result on each row of its screen list (see `screens-and-tools.md`), on every surface, with no exception. Text proof alone cannot pass an issue. A row with no shot is BLOCKED, never PASS.
+
+The user allows you to drive their desktop through computer use (`scripts/app.sh`). Open, start or focus any application that can show the live result. The surface table above is a start, not a limit.
+
+1. Prefer the place where a user sees the result: the product page, the app screen, the chat reply.
+2. If no such place exists, open the application that shows the result best. Examples: browser DevTools, a terminal, a database client, a log viewer, a simulator.
+3. Take the shot during or after the live run, never from old output. Crop it to the result.
+
+**Caution:** a debug tool or a terminal can show secrets, such as headers, cookies, env values, or keys. Do not open those views. Look at each shot before you upload it.
 
 ## API, CLI and jobs
 

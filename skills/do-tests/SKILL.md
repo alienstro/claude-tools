@@ -18,11 +18,6 @@ Run the checks of the repository and report the real result. Every run ends with
    - Tests: `NODE_OPTIONS=--max-old-space-size=1024`. One test file uses at most about 170 MB, so 1 runaway file stays near 1 GB.
    - Typecheck and build: `NODE_OPTIONS=--max-old-space-size=2048`. A typecheck can use about 500 MB and a build more than 1 GB, and only one runs at a time.
    - Set the value on each command, for example `NODE_OPTIONS=--max-old-space-size=1024 <test command>`, so a test run does not get the larger ceiling.
-2. Run one command at a time. The machine has 8 GB of memory.
-3. Use only 1 CPU core. Run 1 test file at a time. A test runner starts one process for each test file, and by default it runs up to 7 of them at once on this machine. That makes the laptop lag. macOS cannot pin a process to one core, so these flags limit the number of busy processes to 1.
-   - `node --test` or `tsx --test`: put `--test-concurrency=1` directly after `--test`. Node ignores the flag, with no warning, when it comes after the file names, and then runs every file at once. `NODE_OPTIONS` cannot carry this flag.
-   - Jest: add `--maxWorkers=1`.
-   - Vitest: add `--maxWorkers=1`.
 
 ## Changed mode
 
@@ -33,9 +28,9 @@ Run the checks of the repository and report the real result. Every run ends with
    - Each changed test file (`*.test.ts`, `*.test.tsx`, `*.spec.ts`).
    - For each changed source file, the test that names it. Search with `rg -l "<basename without extension>" -g '*.test.*' -g '*.spec.*'` inside its package.
 3. Read the `test` script of each package to find its runner. Run only the selected files with that runner:
-   - `node --test` or `tsx --test`: pass the files in place of the glob, keep every flag and `--import` of the script, and add `--test-concurrency=1` directly after `--test`.
-   - Jest: use `--runTestsByPath <files>` and `--maxWorkers=1`, and keep `--config` and `--selectProjects`. Without `--runTestsByPath`, Jest can run the whole suite.
-   - Vitest: `pnpm exec vitest run --maxWorkers=1 <files>`.
+   - `node --test` or `tsx --test`: pass the files in place of the glob, keep every flag and `--import` of the script.
+   - Jest: use `--runTestsByPath <files>`, and keep `--config` and `--selectProjects`. Without `--runTestsByPath`, Jest can run the whole suite.
+   - Vitest: `pnpm exec vitest run <files>`.
 4. Run the lint only on the changed files, inside each package: `pnpm exec eslint <files>`. If the repository uses Prettier, also run `pnpm exec prettier --check <files>`.
 5. Run the typecheck of each changed package (the `typecheck` script, or `tsc --noEmit`). A typecheck cannot check only one file, so filter the output to the changed files. Also report the other errors, and say if they also occur on the base branch.
 6. If a changed package is a dependency of other packages and has a `build` script, build it before you test the packages that import it. Otherwise they test the old `dist/`.
@@ -46,7 +41,7 @@ Do not use `pnpm run verify` or `turbo run test`. Turbo runs up to 10 tasks at o
 
 1. Run the lint: `pnpm run lint`.
 2. Run the typecheck and the build one task at a time. Use the names from the `verify` script, for example:
-   `pnpm exec turbo run typecheck build --concurrency=1`. Read the summary line `Tasks: N successful, N total`.
+   `pnpm exec turbo run typecheck build`. Read the summary line `Tasks: N successful, N total`.
 3. Run the tests one package at a time. For each package that has a `test` script, read the script, and run the same command inside that package with the 1-file limit from Setup step 3. Keep every environment variable, flag, `--import` and global setup of the script.
 4. Read the summary line of each package, such as `ℹ pass N` / `ℹ fail 0`.
 

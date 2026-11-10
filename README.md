@@ -46,16 +46,18 @@ Each hook also needs an entry in `~/.claude/settings.json`. See the hook section
 | `do-ci` | Runs the CI workflow steps on a clean copy of the last commit, as the CI runner does. |
 | `do-screenshots` | Takes a headless Playwright screenshot of a UI change and reports it in a table. |
 | `qa-verification` | Checks a change through the real user workflow and records the evidence. |
+| `qa-stories` | Writes user stories for a branch and proves each story live with screenshots. |
 | `qa-e2e` | Tests one issue or a board column end to end on a live environment and posts the results. |
 | `qa-issue-ui` | Checks a fixed issue on a staging site in a real browser and blocks each write request. |
 | `qa-issue-api` | Checks a backend fix on staging with real read-only requests and reports the proof. |
 | `verify-workflows` | Proves that a feature works across real systems, not only mocks. |
 | `handoff-summary` | Writes a handoff document so that a new session can continue the work. |
+| `handoff-issue` | Starts a new agent session on a GitHub issue in its own Orca worktree. |
 | `writing-maintainable-code` | Applies DRY, SOLID, and reusability, maintainability, testability and scalability. |
 
 ### Team values
 
-`create-issue`, `issues-version` and `qa-e2e` need the values of your team: the owner, the repository, the project board and its ids. Put these values in a `team.local.md` file in the skill folder. The skill reads this file first. When the file does not exist, the skill asks you for the values.
+`create-issue`, `issues-version`, `handoff-issue`, `qa-e2e`, `qa-issue-api`, `qa-issue-ui` and `qa-stories` need the values of your team: the owner, the repository, the project board and its ids. Put these values in a `team.local.md` file in the skill folder. The skill reads this file first. When the file does not exist, the skill asks you for the values.
 
 `do-screenshots` reads `references/<repo>.local.md` for the steps that start your app. `qa-issue-ui` and `qa-issue-api` read `references/<project>.local.md` for the site URLs, the write paths and the safe test data.
 

@@ -1,6 +1,6 @@
 ---
 name: create-issue
-description: Use when the user wants to open a GitHub issue, or to fill the missing parts of an issue that already exists. Writes the title and the description in the team format, and sets every part that the team reads on the board: the assignee, the area label, the issue type (Bug, Feature, Task), and the project fields Status, Priority, Estimate Effort (in hours) and Week. Use it when the user says "/create-issue", "open an issue", "file a bug", "make a ticket for this", "log this for QA", "add this to the board", or "my issue has no type or priority", even if they do not name the fields.
+description: Use when the user wants to open a GitHub issue, or to fill the missing parts of an issue that already exists. Writes the title and the description in the team format, and sets every part that the team reads on the board: the area label, the project label (the product that the work is for, found from the repository), the issue type (Bug, Feature, Task), and the project fields Status, Priority, Estimate Effort (in hours) and Week. It sets an assignee only when the user names one. Use it when the user says "/create-issue", "open an issue", "file a bug", "make a ticket for this", "log this for QA", "add this to the board", or "my issue has no type or priority", even if they do not name the fields.
 user-invocable: true
 allowed-tools: Bash, Read
 ---
@@ -14,12 +14,23 @@ when it creates the issue.
 
 ## Team values
 
-Read `team.local.md` in this skill folder first, if it exists. It holds the values of
-your team: the owner, the repository, the project, the area labels, the title examples
-and the ids. A value in `team.local.md` wins over an example in this file. Keep
-`team.local.md` out of a public repository.
+Read `team.local.md` in this skill folder first, if it exists. It has a `Shared` section
+for the whole org, and one `Repo:` section for each repository. A repo section holds the
+owner, the project, the area labels, the title examples and the ids of that repository.
+A value in `team.local.md` wins over an example in this file. Keep `team.local.md` out of
+a public repository.
 
-When `team.local.md` does not exist, ask the user for these values:
+To find the repo section:
+
+1. Use the repository that the user names.
+2. If the user names no repository, use the repository of the current directory:
+   `gh repo view --json nameWithOwner --jq .nameWithOwner`.
+3. Read the `Shared` section and the `Repo: <owner>/<repo>` section only. Do not use the
+   values of a different repository, because each project has its own field ids.
+
+When `team.local.md` or the repo section does not exist, ask the user for these values.
+Then read the ids with the commands in `## Commands`, and add a new `Repo:` section to
+`team.local.md` so that the next run does not ask again:
 
 | Placeholder | Meaning |
 |---|---|
@@ -36,9 +47,10 @@ add it to `<project>`, so this skill adds it.
 |---|---|---|
 | Title | issue | The format below |
 | Description | issue | The format below |
-| Assignee | issue | `@me`, unless the user names a person |
+| Assignee | issue | Empty. Set it only when the user names a person, such as "assign it to me" |
 | Type | issue (org type) | `Bug`, `Feature` or `Task`, from the title prefix |
 | Area label | issue | One `area:*` label, from the part of the product |
+| Project label | issue | One label that names the product the work is for. See `### Project label` |
 | `qa-reported` label | issue | Only when QA found the problem |
 | Status | project | `Backlog`, unless the user says that work started |
 | Priority | project | `P0` to `P4`. Default `P2` |
@@ -75,6 +87,22 @@ Use the `area:*` labels of the repository. Read them with
 Pick the one area where the fix goes. If the fix goes in two areas, pick the area of the
 largest change.
 
+### Project label
+
+Each issue gets one project label. The label names the product that the work is for, so the
+team can filter the issues of one product across all repositories. The user does not name it.
+Find it in this order:
+
+1. The user names a product. Use the label of that product.
+2. The request comes from the repository of a product, such as the current directory. Use
+   the label of that product, also when the issue goes to a shared backend repository.
+3. Else, use the label of the target repository.
+
+`team.local.md` maps each repository to its project label, in the `Shared` section. If it
+has no map, use the repository name as the label, and add the map to `team.local.md`. If the
+label does not exist in the target repository, create it with the same name and the same
+description. Show the new label in the block of step 3 before you create it.
+
 ### Priority
 
 | Value | Use it when |
@@ -84,6 +112,46 @@ largest change.
 | `P2` | A normal bug or feature. Plan it |
 | `P3` | A small problem with an easy workaround |
 | `P4` | A good idea for later |
+
+### Estimate
+
+The team builds with AI coding agents. An agent writes most of the code, so an issue takes
+about half of the time that the same work takes by hand. Estimate the hours for the work
+by hand, then divide by two. Do not add hours for each risk. One small buffer is enough.
+
+| Size of the work | Estimate |
+|---|---|
+| A copy change, a label or a small style fix | `0.5` |
+| A small fix or a change in one or two files | `1` |
+| A normal feature or bug in one area | `2` to `4` |
+| A feature that touches the contract, a store or two repositories | `6` to `8` |
+| More than `8` hours | Split the issue into a main issue and sub-issues. See `### Split a large issue` |
+
+- Estimate each part of the work, then add the parts. Do not guess one number for the
+  full feature. Show the parts to the user with the total.
+- Use `0.5` steps up to `2` hours, and whole hours after that.
+- An issue that you split into two repositories gets two estimates. Their sum must not be
+  more than the estimate for the full work. Lower the estimate of the first issue if you
+  need to.
+- Do not round up to a "safe" number. A large estimate fills the week and hides space for
+  other work.
+
+### Split a large issue
+
+When the sum of the parts is more than `8` hours, do not create one large issue. Create a
+main issue and one sub-issue for each part.
+
+- **Main issue:** it keeps the full Summary, Problem, Goal and Scope. Its `Done when` lists
+  the sub-issues. Set the type, the area, the Status, the Priority and the Week. Leave the
+  estimate empty, because the board adds the estimates, and a total on the main issue
+  counts the same hours two times.
+- **Sub-issue:** one part that a developer can merge and QA can test alone. Give it its own
+  title, a short description, its own `Done when`, an area and an estimate of `8` hours or
+  less. Use the same type and Priority as the main issue, unless the user says different.
+- Make each sub-issue a real GitHub sub-issue of the main issue, not only a task list
+  item. Then the main issue shows the progress of each part.
+- Show the user the main issue and the list of sub-issues, with each estimate and the
+  total, in the same block. Create all of them only after the user says yes.
 
 ## Title format
 
@@ -218,7 +286,8 @@ of the tester at the end: `Reported by: <name> (QA)`.
    a fix in it, even when you know one. The developer who takes the issue finds the cause
    and chooses the fix. If you know a cause, tell the user in the chat, not in the issue.
 2. Write the title and the description in the formats above. Choose the type, the area,
-   the priority and the estimate.
+   the priority and the estimate. Estimate each part of the work. If the sum is more than
+   `8` hours, split the issue. See `### Split a large issue`.
 3. Show the user one block with the title, the description and each part from the table.
    Wait for a yes before you create the issue. The issue is public to the whole team.
 4. Create the issue, then set the type and the project fields. See `## Commands`.
@@ -235,9 +304,18 @@ the user asks. Then run the commands for the missing parts only.
 To find the user's issues with missing parts, look for an open issue with no `issueType`, no
 `area:*` label, or no `Priority` on the project.
 
+To find the issues that are not on the board, compare the issue numbers of the repository
+with the issue numbers of the project items.
+
+A closed issue keeps its history. Do not change its title, its description or its
+assignee. Set the Week iteration that holds the close date. Set the Status `Won't Do` for
+the reason `NOT_PLANNED`. For the reason `COMPLETED`, use the status that the board sets
+when an issue closes, such as `For Testing`. Read the statuses of other closed items to
+find it. If the board has no such rule, use `Done`.
+
 ## Commands
 
-Take the ids from `team.local.md`. If it has no ids, or a command fails with "not found",
+Take the ids from the repo section of `team.local.md`. If it has no ids, or a command fails with "not found",
 read the ids again:
 
 ```bash
@@ -254,7 +332,10 @@ Then create the issue and set its parts:
 ```bash
 # 1. Create the issue.
 gh issue create --repo <owner>/<repo> --title "<title>" --body-file <file> \
-  --assignee @me --label area:<area> [--label qa-reported]
+  --label area:<area> --label <project label> [--label qa-reported] [--assignee <login>]
+# If the project label is missing in the target repository, create it first:
+#   gh label create <project label> --repo <owner>/<repo> --description "<description>"
+# Add --assignee only when the user names a person. "me" means @me.
 
 # 2. Set the issue type.
 gh api graphql -f query='mutation{updateIssueIssueType(input:{issueId:"<issue node id>",issueTypeId:"<type id>"}){issue{number}}}'
@@ -267,6 +348,9 @@ gh project item-edit --project-id <project id> --id <item id> \
   --field-id <Status field id> --single-select-option-id <status option id>
 gh project item-edit ... --field-id <Priority field id> --single-select-option-id <priority option id>
 gh project item-edit ... --field-id <Estimate Effort field id> --number <hours>
+
+# 5. For a split issue: create each sub-issue with steps 1 to 4, then link it to the main issue.
+gh api graphql -f query='mutation{addSubIssue(input:{issueId:"<main issue node id>",subIssueId:"<sub-issue node id>"}){issue{number}}}'
 gh project item-edit ... --field-id <Week field id> --iteration-id <week id>
 ```
 

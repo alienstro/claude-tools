@@ -20,10 +20,6 @@ This skill removes each of them. It is slower than `/do-tests`, because it insta
    - Tests: `NODE_OPTIONS=--max-old-space-size=1024`.
    - Install, typecheck and build: `NODE_OPTIONS=--max-old-space-size=2048`.
    - Set the value on each command, so a test run does not get the larger ceiling.
-2. Run one command at a time. The machine has 8 GB of memory.
-3. Run 1 test file at a time, so that only 1 CPU core is busy.
-   - `node --test` or `tsx --test`: put `--test-concurrency=1` directly after `--test`. Node ignores the flag when it comes after the file names.
-   - Jest or Vitest: add `--maxWorkers=1`.
 
 ## Steps
 
@@ -36,7 +32,7 @@ This skill removes each of them. It is slower than `/do-tests`, because it insta
 5. Run the install step of the workflow without changes, such as `pnpm install --frozen-lockfile`.
    - A lockfile error is a CI failure. Report it. Do not fix it with a plain install.
 6. Run the other steps in the order of the workflow, one at a time. Set `CI=true` and the `env` of the job on each step. Keep the limits from Setup:
-   - Turbo: add `--concurrency=1 --force`. `--force` runs each task again and does not replay the cache.
+   - Turbo: add `--force`. `--force` runs each task again and does not replay the cache.
    - Tests: if the test script reads a concurrency variable, such as `TEST_CONCURRENCY`, set it to `1` and keep the step as it is. Otherwise run the test script of each package, one package at a time, with the 1-file limit from Setup step 3.
    - Skip a step that deploys, publishes, pushes, uploads or needs a secret. Name each skipped step in the report.
 7. CI stops at the first failed step. Run the later steps too, but mark them "after a failure", so the report gives the CI result and the full picture.

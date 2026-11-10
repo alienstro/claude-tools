@@ -136,8 +136,11 @@ def closing_issues_gql(repo, prs):
     result = {}
     prs = sorted(prs)
     for start in range(0, len(prs), 40):
-        body = "".join("p%d:pullRequest(number:%d){number closingIssuesReferences(first:20)"
-                       "{nodes{number}}} " % (n, n) for n in prs[start:start + 40])
+        # A commit title can name an issue as "(#N)" too. issueOrPullRequest gives an
+        # empty object for an issue, where pullRequest fails the whole batch.
+        body = "".join("p%d:issueOrPullRequest(number:%d){... on PullRequest{number "
+                       "closingIssuesReferences(first:20){nodes{number}}}} " % (n, n)
+                       for n in prs[start:start + 40])
         for value in repo_block(repo, body).values():
             if value:
                 result[value["number"]] = [i["number"] for i in value["closingIssuesReferences"]["nodes"]]

@@ -30,6 +30,9 @@ before the release that you write. Copy their section names, their bullet form a
 title form. The newer of the two is the style reference. An older release can use an older
 style, so do not copy it.
 
+Do not copy a `Previous Releases` table, or any list of the older releases. The new notes
+hold only the changes of this release.
+
 ### 3. Collect the changes
 
 Run the script from the repository root:
@@ -120,7 +123,8 @@ Save the draft as `release-notes-<version>.md` in the scratchpad folder of the s
 there is no scratchpad folder, use `${TMPDIR:-/tmp}`. Do not save the draft in the
 repository, because the notes live in the PR and in the release, not in git.
 
-Put only the release body in the file. It starts with `## Release Notes`.
+Put only the release body in the file. It starts with `## Release Notes`. It ends with the
+last section of changes, with no `Previous Releases` table after it.
 
 In the chat, show the title, the full body, and the file path. Under them, list:
 

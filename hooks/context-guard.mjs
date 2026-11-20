@@ -3,7 +3,7 @@
 // and starts a fresh Claude through `orca agent launch` with the Orca "Focused handoff" brief.
 // The hook fails open: on an error of its own, it lets the prompt through.
 import { openSync, readSync, fstatSync, closeSync, existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -197,15 +197,14 @@ try {
     if (handle.startsWith('term_')) {
       // Give the new tab the old title, so the owner sees the same task name.
       if (title) {
-        try {
-          execFileSync(process.env.ORCA_CLI_COMMAND || 'orca', ['terminal', 'rename', '--terminal', handle, '--title', title, '--json'], {
-            cwd,
-            timeout: 5_000,
-            stdio: 'ignore',
-          });
-        } catch {
-          // The handoff still worked; the new tab keeps its own title.
-        }
+        // A rename at launch time got lost, because Orca had not mounted the new tab yet.
+        // So rename again in the background after the tab exists, and keep the output for diagnosis.
+        const log = openSync(`${marker}.rename.log`, 'w');
+        spawn(
+          'sh',
+          ['-c', 'for s in 0 3 8; do sleep $s; "$0" terminal rename --terminal "$1" --title "$2" --json; done', process.env.ORCA_CLI_COMMAND || 'orca', handle, title],
+          { cwd, detached: true, stdio: ['ignore', log, log] },
+        ).unref();
       }
       try {
         execFileSync(process.env.ORCA_CLI_COMMAND || 'orca', ['terminal', 'switch', '--terminal', handle, '--json'], {

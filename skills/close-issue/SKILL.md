@@ -1,6 +1,6 @@
 ---
 name: close-issue
-description: Use when a pull request fixes a GitHub issue and the user wants the two linked and the issue closed. Adds "Closes #N" to the PR body, comments "Fixed by #PR" on the issue, closes the issue after the PR merges, and sets the issue's project-board Status to "For Testing" so QA picks it up. Use it when the user says "/close-issue", "close the issue", "close #42 with #57", "link the PR to the issue", "put the PR in the issue", "the PR is merged, close the ticket", or "mark the issue as fixed", even if they do not say "link" or name the board. Needed because a PR to a branch other than the default branch (such as dev) never closes or links its issue by itself.
+description: Use when a pull request fixes a GitHub issue and the user wants the two linked and the issue closed. Adds "Closes #N" to the PR body, comments "Fixed by #PR" on the issue, closes the issue after the PR merges, sets the issue's project-board Status to "For Testing" so QA picks it up, and then stops the agent session of the issue's Orca worktree (from /handoff-issue) and removes that worktree. Use it when the user says "/close-issue", "close the issue", "close #42 with #57", "link the PR to the issue", "put the PR in the issue", "the PR is merged, close the ticket", or "mark the issue as fixed", even if they do not say "link" or name the board. Needed because a PR to a branch other than the default branch (such as dev) never closes or links its issue by itself.
 ---
 
 # Close Issue
@@ -95,6 +95,35 @@ skill does by hand what GitHub does not do for `dev`.
 
    Run the board script again with `--dry-run`. It must say `already set` for each board.
 
+7. **Close the Orca worktree.** Do this step only when the PR is merged. Skip it when the PR is
+   open, because the agent can still need to fix review comments.
+   - Find the worktree with `orca worktree show --worktree issue:<issue> --json`. If none
+     matches, try `branch:<PR head branch>`. If none matches again, skip this step.
+   - Stop and tell the user when `isMainWorktree` is `true`, or when `path` contains the
+     current directory of this session.
+   - Look for unsaved work. Removal deletes the folder, and work that is not pushed is lost:
+
+     ```sh
+     git -C <path> status --porcelain
+     git -C <path> log --oneline @{u}..HEAD 2>/dev/null || git -C <path> log --oneline origin/HEAD..HEAD
+     ```
+
+     If either command prints lines, show them to the user and ask before you continue.
+     Use `--force` on `orca worktree rm` only after the user says yes.
+   - If a `handoff-issue` watch for this agent runs in this session, stop it with `TaskStop`.
+     A watch that stays on reports a false `QUIET` after 5 minutes.
+   - Stop the agent session, then remove the worktree. Keep the branch, unless the user asks
+     for `--delete-branch`:
+
+     ```sh
+     orca terminal list --worktree <selector> --json | jq '.result.totalCount'
+     orca terminal close --worktree <selector> --all --json
+     orca worktree rm --worktree <selector> --json
+     ```
+
+   - Check that `test -d <path>` fails and that `orca worktree list --json` has no row with
+     this `path`.
+
 ## Report
 
 Write the report in ASD-STE100 Simplified Technical English. Use this shape:
@@ -108,15 +137,20 @@ Issue #<issue> is <closed / still open, because PR #<pr> is not merged>.
 | Issue #<issue> comment | <no link to the PR> | **"Fixed by #<pr>, merged into `dev`."** |
 | Issue #<issue> state | Open | **Closed (completed)** |
 | Board <name> Status | <old status> | **For Testing** |
+| Agent session | Running | **Stopped** (Orca closed <n> terminals) |
+| Worktree folder `<path>` | Present | **Removed** |
 
 <Next step, if any: "Run /close-issue again after PR #<pr> merges.">
 ```
 
-Write "no change" in a row when the link or the state was already there.
+Write "no change" in a row when the link or the state was already there. Leave out the two
+worktree rows when step 7 found no worktree or the PR is still open.
 
 ## Rules
 
 - Do not close an issue for a PR that is not merged.
+- Do not remove a worktree for a PR that is not merged, or a worktree with unsaved work that
+  the user did not approve to lose.
 - Do not post a second comment or add a second `Closes` line. Run the skill two times and the
   result stays the same.
 - Do not name Claude, Claude Code, or an AI tool in a comment or in the PR body.

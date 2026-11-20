@@ -1,6 +1,6 @@
 # Screens and tools
 
-Four skills read this file: `qa-e2e`, `qa-stories`, `create-pr` and `edit-pr`. It says which screens a change needs, and which tool takes each screenshot.
+Five skills read this file: `qa-e2e`, `qa-stories`, `qa-explore`, `create-pr` and `edit-pr`. It says which screens a change needs, and which tool takes each screenshot.
 
 ## 1. List every screen
 

@@ -1,6 +1,6 @@
 ---
 name: qa-e2e
-description: Use when the user wants one issue or many issues tested end to end on a live test environment, with each result proved and recorded. Takes an issue number, a list of issues, or a testing status of a GitHub Project board (such as "For Testing" or "Ready for QA"). Confirms that the test environment runs each fix, tests each fix on each screen that it touches (web page in a browser, desktop or chat app, mobile simulator, API, CLI, background job, or logs and queries for code with no page), with the best tool that the session has (Playwright, the debug port, Chrome DevTools MCP, Claude in Chrome, computer use, a simulator). A live test is required for each issue: regression tests support a verdict but never replace the live check. It posts a comment with a results table, at least one live screenshot of each result, and text evidence on each issue, and moves each issue to the pass status (such as "For Release") or the fail status (such as "Failed Testing"). Can also give only the manual test steps of an issue when the user wants to run them by hand. Use it when the user says "/qa-e2e", "QA the For Testing column", "test all the issues waiting for QA", "QA the board", "test issue 123 end to end", "how can we test this", "give me the e2e steps", or pastes an issue or board URL and asks to test it, even if they do not name a surface or a status.
+description: Use when the user wants one issue or many issues tested end to end on a live test environment, with each result proved and recorded. Takes an issue number, a list of issues, or a testing status of a GitHub Project board (such as "For Testing" or "Ready for QA"). Confirms that the test environment runs each fix, tests each fix on each screen that it touches, through the happy path as a new user and as a power user, each acceptance box, each branch of the diff and the edge cases (web page in a browser, desktop or chat app, mobile simulator, API, CLI, background job, or logs and queries for code with no page), with the best tool that the session has (Playwright, the debug port, Chrome DevTools MCP, Claude in Chrome, computer use, a simulator). A live test is required for each issue: regression tests support a verdict but never replace the live check. It posts a comment with a results table, at least one live screenshot of each result, and text evidence on each issue, and moves each issue to the pass status (such as "For Release") or the fail status (such as "Failed Testing"). Can also give only the manual test steps of an issue when the user wants to run them by hand. Use it when the user says "/qa-e2e", "QA the For Testing column", "test all the issues waiting for QA", "QA the board", "test issue 123 end to end", "how can we test this", "give me the e2e steps", or pastes an issue or board URL and asks to test it, even if they do not name a surface or a status.
 user-invocable: true
 argument-hint: "[Issue #42 | issue URL | PR URL | board URL] (empty = find testable issues)"
 ---
@@ -15,6 +15,7 @@ Test each issue on its real surface. Prove each result in a comment on the issue
 2. If it does not exist, or the current repository is not in it, ask the user for: the board (owner and project number) or the issue list, the test status, the pass and fail statuses, the test environment and how to read its build, and the surfaces to use. Offer to save the answers as a new section of `team.local.md`.
 3. Read `references/surfaces.md` once. It says how to test and prove each kind of surface.
 4. Read `references/screens-and-tools.md` once. It says how to list every screen of a change, how to find the tools of this session, and which tool to use first for each surface.
+5. Read `references/test-cases.md` once. It says how to find the happy-path rows, the edge rows and the two personas of each issue.
 
 Below, `$S` is this skill's `scripts/` folder, and `$W` is a new folder in your scratchpad (`$W/ev` for screenshots, `$W/final` for comments).
 
@@ -48,7 +49,7 @@ For a single issue with no board, skip the status move and post only the comment
 
 ## Rules
 
-- **Test each issue live. This is required.** Each issue gets at least one live check on the test environment that shows the expected result of the issue. Regression tests and the code at HEAD support a verdict, but they never replace the live check. An issue with no live check cannot pass.
+- **Test each issue live. This is required.** Each issue gets live checks on the test environment for each row of its case matrix (`references/test-cases.md`): the happy path as a new user and as a power user, each acceptance box, each branch of the diff, and the edge cases. Regression tests and the code at HEAD support a verdict, but they never replace the live check. An issue with no live check cannot pass.
 - **Show each result on each screen. This is required.** Make the screen list of each issue (`references/screens-and-tools.md`). Each row of the list gets a screenshot of its live result, on every surface, with no exception. There is no limit on the number of rows.
 - **Use the tools that this session has.** Find them first, then use the tool order in `references/screens-and-tools.md`. If a tool fails two times, use the next one. Each result names its tool. Text proof supports the screenshot, but it never replaces it. See **Screen proof for every surface** in `references/surfaces.md`.
 - **Open any application that you need for the screen proof.** The user allows you to drive their desktop through computer use (`$S/app.sh`). Open, start or focus any application that can show the live result. Run one GUI test at a time.
@@ -94,11 +95,13 @@ A fix that is `NOT-on-staging` cannot pass. Comment that it is not deployed, lea
 
 ### 3. Plan each issue
 
-For each issue, read the issue, its expected result, and the fix PR summary. A PR's "old and new behaviour" table often gives the exact new text to expect. Then write one line:
+For each issue, read the issue, its expected result, and the fix PR summary. A PR's "old and new behaviour" table often gives the exact new text to expect. Also read the diff of the fix PR (`gh pr diff <pr>`). Then write one line:
 
 `#<n> | surface(s) | live steps | regression test files | data needed | page that shows the result`
 
 The "live steps" field is never empty. Each live step is an action on the test environment and the exact result that you expect to see.
+
+Then write the case matrix of the issue from `references/test-cases.md`: the happy path as each persona, each acceptance box, each branch of the diff, and the edge cases. Do not start the live test before the matrix is written. Test each row, not only the steps to reproduce.
 
 Choose the surfaces from `references/surfaces.md`. Then make the screen list from `references/screens-and-tools.md`, with the tool of each row, and put it in the plan. For a backend fix, also find a page that shows its result: an admin or ops console page, a settings row, a list of records, a public page. When no page shows it, write the application that you open for the screen proof instead. A fix with no page still needs a live step (see **Make the live state** below). Group issues that share one setup, so that one setup serves several checks (one open approval, one test record, one signed-in page).
 
@@ -149,8 +152,8 @@ Poll for a slow reply with `app.sh ... wait`. Do not chain `sleep` commands.
 
 ### 6. Decide each verdict
 
-- **PASS:** the fix is on the environment, its regression tests pass, the live check gives the expected result, and a screenshot shows that result. All four are required.
-- **FAIL:** an expected result from the issue does not happen. Also fail when the reported symptom shows on another path in the same build, and give that path's exact steps.
+- **PASS:** the fix is on the environment, its regression tests pass, each row of the case matrix passes live or has a written reason (see `references/test-cases.md`), and a screenshot shows each result. All four are required. A run of only the reported steps never passes.
+- **FAIL:** an expected result from the issue does not happen, or an edge row fails in the behaviour that the issue changes. Also fail when the reported symptom shows on another path in the same build, and give that path's exact steps.
 - **BLOCKED:** the live check cannot run, or no screenshot can show its result, even after you try each way in **Make the live state** and each screen proof. Comment what passed and the open live step, leave the status, and tell the user what the live step needs. Never pass an issue on tests alone.
 - **Note:** a new problem that the issue does not cover. Put it under "Notes" in the comment. It does not fail the issue.
 

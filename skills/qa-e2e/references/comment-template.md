@@ -7,10 +7,11 @@ One comment per issue. Put the verdict first. Quote bot replies exactly. Give ea
 
 **Fix:** #<PR> (<short sha>). **Tested:** <YYYY-MM-DD> on <surface: Telegram bot name / WhatsApp staging number / console page / API>.
 
-| # | Screen | Step | Expected | Actual | Tool | Result |
-|---|---|---|---|---|---|---|
-| 1 | <row of the screen list> | <what you did, with the time> | <expected, from the issue or the PR> | <exact reply or value> | <tool that took the shot> | ✅ |
-| 2 | ... | ... | ... | ... | ... | ❌ |
+| # | Kind | Persona | Screen | Step | Expected | Actual | Tool | Result |
+|---|---|---|---|---|---|---|---|---|
+| 1 | happy | new | <row of the screen list> | <what you did, with the time> | <expected, from the issue or the PR> | <exact reply or value> | <tool that took the shot> | ✅ |
+| 2 | edge | power | ... | ... | ... | ... | ... | ❌ |
+| 3 | edge | - | ... | ... | ... | not run: <reason> | - | ⏭️ |
 
 <For a FAIL: one line "Repro:" with the shortest steps.>
 <For a BLOCKED: one line "Open step:" with who must do what.>

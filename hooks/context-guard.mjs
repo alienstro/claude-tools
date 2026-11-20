@@ -129,6 +129,23 @@ function launchAgent(brief, cwd) {
   });
 }
 
+// Return the title of this session's Orca tab, or '' when Orca cannot tell.
+function currentTitle(cwd) {
+  const self = process.env.ORCA_TERMINAL_HANDLE;
+  if (!self) return '';
+  try {
+    const out = execFileSync(process.env.ORCA_CLI_COMMAND || 'orca', ['terminal', 'show', '--terminal', self, '--json'], {
+      cwd,
+      encoding: 'utf8',
+      timeout: 5_000,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return String(JSON.parse(out)?.result?.terminal?.title || '').trim();
+  } catch {
+    return '';
+  }
+}
+
 function block(reason) {
   process.stdout.write(JSON.stringify({ decision: 'block', reason }));
 }
@@ -163,6 +180,8 @@ try {
 
   const cwd = input.cwd || process.cwd();
   try {
+    // Read the title before the launch, while this tab still has it.
+    const title = currentTitle(cwd);
     const brief = buildBrief({ transcriptPath: input.transcript_path, cwd, hints: statusHints(entries), prompt });
     const reply = launchAgent(brief, cwd);
     mkdirSync(STATE_DIR, { recursive: true });
@@ -176,6 +195,18 @@ try {
     }
     // `--focus` alone did not show the new tab in a live test, so switch to it too.
     if (handle.startsWith('term_')) {
+      // Give the new tab the old title, so the owner sees the same task name.
+      if (title) {
+        try {
+          execFileSync(process.env.ORCA_CLI_COMMAND || 'orca', ['terminal', 'rename', '--terminal', handle, '--title', title, '--json'], {
+            cwd,
+            timeout: 5_000,
+            stdio: 'ignore',
+          });
+        } catch {
+          // The handoff still worked; the new tab keeps its own title.
+        }
+      }
       try {
         execFileSync(process.env.ORCA_CLI_COMMAND || 'orca', ['terminal', 'switch', '--terminal', handle, '--json'], {
           cwd,

@@ -10,7 +10,7 @@ Run the checks of the repository and report the real result. Every run ends with
 ## Modes
 
 - **Changed (default):** `/do-tests` checks only the code that the branch changes. Use this mode for fast feedback.
-- **Full:** `/do-tests full` runs the full gate. Run it one time before a merge. A changed-only run does not replace it, because it cannot find a break in code that imports the changed code.
+- **Full:** `/do-tests full` runs the gate through Turbo on the changed packages and on every package that imports them. Run it one time before a merge. A changed-only run does not replace it, because it cannot find a break in code that imports the changed code.
 
 ## Setup (both modes)
 
@@ -37,13 +37,20 @@ Run the checks of the repository and report the real result. Every run ends with
 
 ## Full mode
 
-Do not use `pnpm run verify` or `turbo run test`. Turbo runs up to 10 tasks at once, and it cannot add the 1-file limit to the test script of each package.
+Use Turbo with limits. Turbo runs only the packages that the branch changes and the packages that import them. It also replays the cached result of a package whose inputs did not change. Do not use `pnpm run verify` or a plain `turbo run test`: with no limits, Turbo runs up to 10 tasks at once and lags the machine.
 
-1. Run the lint: `pnpm run lint`.
-2. Run the typecheck and the build one task at a time. Use the names from the `verify` script, for example:
-   `pnpm exec turbo run typecheck build`. Read the summary line `Tasks: N successful, N total`.
-3. Run the tests one package at a time. For each package that has a `test` script, read the script, and run the same command inside that package with the 1-file limit from Setup step 3. Keep every environment variable, flag, `--import` and global setup of the script.
-4. Read the summary line of each package, such as `ℹ pass N` / `ℹ fail 0`.
+1. Get the merge base from Changed mode step 1: `git merge-base HEAD <base>`.
+2. Run the lint on the whole repository: `pnpm run lint`. The lint is not a Turbo task.
+3. Run the typecheck and the build of the affected packages, one task at a time. Use the task names from the `verify` script, for example:
+   `NODE_OPTIONS=--max-old-space-size=2048 pnpm exec turbo run typecheck build:eve --filter='...[<merge-base>]' --concurrency=1`
+4. Run the tests of the affected packages, one package and one file at a time:
+   `TEST_CONCURRENCY=1 NODE_OPTIONS=--max-old-space-size=1024 pnpm exec turbo run test --filter='...[<merge-base>]' --concurrency=1`
+   This works only when each `test` script reads `TEST_CONCURRENCY`. If a script does not, run that package by hand with its runner's 1-file flag.
+5. Do not remove a package from the list that Turbo selects. A change to a root file, such as the lockfile, can select every package, and that is correct.
+6. Read the Turbo summary lines `Tasks: N successful, N total` and `Cached: N cached`, and the runner summary of each package, such as `ℹ pass N` / `ℹ fail 0`. Turbo replays the log of a cached task, so a cached package also shows its runner summary.
+7. If `TURBO_CACHE_DIR` is not set, a new worktree starts with an empty cache. The filter still skips the packages that the branch does not affect.
+
+After a fix for a failed check, run only the failed test files with the rules of Changed mode. Then run Full mode one time before the merge.
 
 ## Report (both modes)
 

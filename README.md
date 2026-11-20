@@ -76,7 +76,7 @@ A long session costs more on each turn, and each `/compact` loses detail. This h
 1. The hook reads the context size of the last turn from the transcript. A `/compact` resets it to 0.
 2. Below the limit, or for a prompt that starts with `/`, the prompt passes.
 3. Above the limit, the hook runs `orca agent launch --agent claude --focus` with the brief: the transcript path, the last prompt and answer, and your blocked prompt.
-4. The hook switches Orca to the new tab with `orca terminal switch`.
+4. The hook gives the new tab the title of the old tab with `orca terminal rename`, then switches Orca to it with `orca terminal switch`.
 5. The old tab shows "Handed off to a new Claude (`<handle>`)". A marker file in `~/.claude/hooks/state/` stops a second launch.
 6. Outside an Orca terminal, or when the launch fails, the hook blocks and asks you to hand off by hand.
 7. An error in the hook itself lets the prompt pass, so the hook never locks a session.

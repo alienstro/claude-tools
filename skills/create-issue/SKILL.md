@@ -146,8 +146,9 @@ main issue and one sub-issue for each part.
   estimate empty, because the board adds the estimates, and a total on the main issue
   counts the same hours two times.
 - **Sub-issue:** one part that a developer can merge and QA can test alone. Give it its own
-  title, a short description, its own `Done when`, an area and an estimate of `8` hours or
-  less. Use the same type and Priority as the main issue, unless the user says different.
+  title, a short description, its own `Done when` with a happy path and the edge cases of
+  that part, an area and an estimate of `8` hours or less. Use the same type and
+  Priority as the main issue, unless the user says different.
 - Make each sub-issue a real GitHub sub-issue of the main issue, not only a task list
   item. Then the main issue shows the progress of each part.
 - Show the user the main issue and the list of sub-issues, with each estimate and the
@@ -190,6 +191,38 @@ checked. Do not delete the section, because an empty gap is a fact too.
   each issue or PR with `#<number>`.
 - Give numbers: how many users, how often, how long, how much money.
 
+### Done when: happy paths and edge cases
+
+`Done when` is the test plan of QA. Each box is one check: the action, the input and the
+expected result, such as "Upload a 20 MB PDF. The file shows in the list in 5 seconds."
+Do not write a vague box, such as "It works" or "Handle errors".
+
+Split `Done when` into two groups:
+
+- **Happy path:** the main flow, from start to end, with valid input, as a normal user.
+  Give one box for each user role or platform that the change touches. For a bug, the
+  first box is the steps to reproduce, and the expected result is the **Expected** text.
+- **Edge cases:** go through the list below. Write one box for each item that applies to
+  this change. Skip an item that does not apply. Do not write a box for it.
+
+| Item | Examples of a check |
+| --- | --- |
+| Empty or missing input | An empty field, no items, a new user with no data, a null value |
+| Invalid input | A wrong format, special characters, emoji, HTML or script text, a wrong file type |
+| Limits | The minimum, the maximum, one more than the maximum, zero, a very long text, a large file |
+| Permissions | A user without access, a signed-out user, another team's data, each role |
+| Session and state | An expired session, a deleted or archived item, a stale page after a change |
+| Failure | A network error, a slow or timed-out request, an error from a third-party service, a retry |
+| Repeat and race | A double click, two tabs, two users at the same time, the same action two times |
+| Many items | Pagination, a long list, sort and filter results |
+| Time and region | Time zones, a date at the end of a month or a year, currency and number format, language |
+| Platforms | Web and mobile, each browser or screen size that the team supports |
+| Regression | The old flows near the change still work, and the other platform still works |
+
+Each edge-case box gives the expected result too, such as an exact error message or "the
+button stays disabled". When the expected result is not decided, add it to
+**Open questions** and write "Expected result: to be decided".
+
 ### Bug
 
 ```markdown
@@ -228,9 +261,13 @@ last release. Give the reader the context to understand the problem.>
 <Screenshots, links, trace ids, log lines. Put the error text in a code block.>
 
 ## Done when
-- [ ] <a check that QA can do, with the expected result>
-- [ ] <a check for an edge case, such as a large file or an expired session>
-- [ ] <a check that the old behaviour on the other platform still works>
+**Happy path**
+- [ ] <the steps to reproduce. Expected result: the **Expected** text>
+- [ ] <the same flow for each other role or platform that has the bug>
+
+**Edge cases**
+- [ ] <a near variant of the bug input, such as a large file or an expired session, with the expected result>
+- [ ] <a regression check: the old flows near the fix still work>
 
 ## Related
 - <issues and PRs, such as #42, #57>
@@ -268,8 +305,13 @@ options and why this issue does not use them.>
 - <a decision that the team must make before or during the work, or "None">
 
 ## Done when
-- [ ] <a check that QA can do, with the expected result>
-- [ ] <a check for a permission, a limit or an error case>
+**Happy path**
+- [ ] <the main flow from start to end, with valid input, and the expected result>
+- [ ] <the same flow for each other role or platform in scope>
+
+**Edge cases**
+- [ ] <one check for each item of the edge-case list that applies, with the expected result>
+- [ ] <a regression check: the old flows near the change still work>
 
 ## Related
 - <issues and PRs>
@@ -287,11 +329,13 @@ of the tester at the end: `Reported by: <name> (QA)`.
    and chooses the fix. If you know a cause, tell the user in the chat, not in the issue.
 2. Write the title and the description in the formats above. Choose the type, the area,
    the priority and the estimate. Estimate each part of the work. If the sum is more than
-   `8` hours, split the issue. See `### Split a large issue`.
+   `8` hours, split the issue. See `### Split a large issue`. Write `Done when` with the
+   happy path and the edge-case list. See `### Done when: happy paths and edge cases`.
 3. Show the user one block with the title, the description and each part from the table.
    Wait for a yes before you create the issue. The issue is public to the whole team.
 4. Create the issue, then set the type and the project fields. See `## Commands`.
-5. Read the issue again and check each part. Give the user the issue link and the parts
+5. Read the issue again and check each part. Make sure that `Done when` has a happy path
+   group and an edge-case group, and that each box gives an expected result. Give the user the issue link and the parts
    that you set.
 
 ### Fill an issue that already exists
@@ -300,6 +344,10 @@ When the user gives an issue number, or asks to fix the issues that have no type
 priority, do not create a new issue. Read the issue, find the parts that are missing, and
 show the user the values that you want to set. Change the title or the description only if
 the user asks. Then run the commands for the missing parts only.
+
+For an open issue, also read its `Done when`. If it has no happy path, no edge cases, or a
+box with no expected result, show the user the boxes that you want to add. Add them only
+after the user says yes, because this changes the description.
 
 To find the user's issues with missing parts, look for an open issue with no `issueType`, no
 `area:*` label, or no `Priority` on the project.

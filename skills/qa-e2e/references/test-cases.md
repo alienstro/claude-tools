@@ -76,20 +76,67 @@ Give each row of the matrix its persona: `new`, `power` or `-`.
 
 Put the matrix in the plan of the issue. Use one row for each case:
 
-`| # | Kind (happy / acceptance / branch / edge) | Persona | Case | Steps | Expected | Screen |`
+`| # | Kind (happy / acceptance / branch / edge) | Persona | Area | Case | Steps | Expected | Screen |`
+
+Give each edge row its area from section 2 (Data, Entry points, Timing, Lifecycle, Errors,
+Roles and plans, Layout, Access, Neighbours). Give the other rows `-`.
 
 Rules for the matrix:
 
 - At least two happy-path rows (one for each persona) and at least three edge rows for
   each issue. A one-line fix still gets its edge rows, because a small fix often breaks
   the next path.
+- The edge rows come from at least three different areas. Three rows of one area (for
+  example three long texts) count as one area.
+- Each issue gets one **Errors** row and one **Lifecycle** row (a reload, a restart or a
+  sign-out and sign-in), unless the change cannot reach them. Write the reason for a skip.
 - Each acceptance box has its own row.
 - Each branch of the diff has its own row.
 - For a fix of a flash, a flicker or an animation, take a burst of frames (8 or more
   frames in 2 seconds) for each case, not one shot. One shot can miss a short flash.
 - For a fix that shows only while work runs, take the shots during the run and after it.
 
-## 5. Verdict from the matrix
+## 5. Run the two phases
+
+Test each issue in two phases, in this order. Do not stop after phase 1.
+
+1. **Happy path.** Run each happy-path, acceptance and branch row. These rows prove that
+   the fix does its job for a normal user.
+2. **Edge cases.** Run each edge row. Run them also when a phase 1 row failed, because the
+   report must show every failure of the fix, not only the first one.
+
+### Emulate before you skip
+
+Many edge rows look hard to reach, but the browser or the tool can make the state. Try the
+method below before you write "not run" for an edge row. Write the method that you tried
+in the reason of each row that is still not run.
+
+| State | How to make it |
+|---|---|
+| Reduce motion | Chrome DevTools `Emulation.setEmulatedMedia` with `prefers-reduced-motion: reduce`, or Playwright `page.emulateMedia({ reducedMotion: "reduce" })` |
+| Slow network, no network | DevTools network throttle or offline, or Playwright `context.setOffline(true)` |
+| A server error or a refusal | Stop the request inside the page and answer 500, 409 or 401 (Playwright `page.route`, or a `fetch` wrapper). The shared environment does not change |
+| A slow response | Hold the request in a `page.route` handler for some seconds, then let it go |
+| Phone width, narrow window | Set the viewport (390 px, 760 px) or resize the window |
+| Two windows at the same time | Open a second tab or a second browser context on the same account |
+| Keyboard only | Send real keys (Tab, Return, Escape), not a `click()` call |
+| A first-time user | Make a new test record or a new `qa<issue>` workspace |
+| After a reload or a restart | Reload the page, or quit and start the app again |
+
+A row that needs a real device, a real payment or a second real account stays "not run".
+Give the reason.
+
+## 6. Check the counts before you post
+
+Before you write the verdict, count the rows that ran live. Do not post a comment that
+fails this check. Run the missing rows first.
+
+- Happy-path rows: two or more, one for each persona, and each one ran live.
+- Edge rows that ran live: three or more, from three or more areas.
+- An Errors row and a Lifecycle row ran live, or the comment gives the reason for a skip.
+- Each "not run" row names the emulation method that you tried, or why no method works.
+
+## 7. Verdict from the matrix
 
 - **PASS:** every happy-path, acceptance and branch row passes live, and each edge row
   passes or is "not applicable" with a reason.
@@ -97,8 +144,9 @@ Rules for the matrix:
   row. Give the exact steps of that row.
 - **Note:** a row fails in a feature that the issue does not change. Put it under "Notes"
   and offer to file it with `create-issue`.
-- **BLOCKED:** a happy-path or acceptance row cannot run live. An edge row that cannot run
-  goes in the comment as "not run", with the reason. It does not block the issue, but the
-  report names it.
+- **BLOCKED:** a happy-path or acceptance row cannot run live, or fewer than three edge
+  rows ran live after you tried each emulation method. Other edge rows that cannot run go
+  in the comment as "not run", with the reason. They do not block the issue, but the
+  report names them.
 
 Never mark an issue PASS when only the reported steps ran.

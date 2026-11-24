@@ -101,7 +101,7 @@ For each issue, read the issue, its expected result, and the fix PR summary. A P
 
 The "live steps" field is never empty. Each live step is an action on the test environment and the exact result that you expect to see.
 
-Then write the case matrix of the issue from `references/test-cases.md`: the happy path as each persona, each acceptance box, each branch of the diff, and the edge cases. Do not start the live test before the matrix is written. Test each row, not only the steps to reproduce.
+Then write the case matrix of the issue from `references/test-cases.md`: the happy path as each persona, each acceptance box, each branch of the diff, and the edge cases, each with its area. Do not start the live test before the matrix is written. Test each row, not only the steps to reproduce.
 
 Choose the surfaces from `references/surfaces.md`. Then make the screen list from `references/screens-and-tools.md`, with the tool of each row, and put it in the plan. For a backend fix, also find a page that shows its result: an admin or ops console page, a settings row, a list of records, a public page. When no page shows it, write the application that you open for the screen proof instead. A fix with no page still needs a live step (see **Make the live state** below). Group issues that share one setup, so that one setup serves several checks (one open approval, one test record, one signed-in page).
 
@@ -118,6 +118,8 @@ Choose the surfaces from `references/surfaces.md`. Then make the screen list fro
 Each subagent writes one comment file per issue and posts nothing. You review, post and move. For one or two issues, do it all yourself.
 
 ### 5. Test
+
+Test each issue in two phases (`references/test-cases.md`, section 5): first the happy path (happy, acceptance and branch rows), then the edge cases. Run the edge cases also when a happy row fails. Before you write "not run" for an edge row, try the emulation methods in that section.
 
 Follow `references/surfaces.md` for each surface. Short form:
 
@@ -152,7 +154,7 @@ Poll for a slow reply with `app.sh ... wait`. Do not chain `sleep` commands.
 
 ### 6. Decide each verdict
 
-- **PASS:** the fix is on the environment, its regression tests pass, each row of the case matrix passes live or has a written reason (see `references/test-cases.md`), and a screenshot shows each result. All four are required. A run of only the reported steps never passes.
+- **PASS:** the fix is on the environment, its regression tests pass, each row of the case matrix passes live or has a written reason (see `references/test-cases.md`), the counts check of `test-cases.md` section 6 passes (two or more happy rows, three or more edge rows live from three or more areas), and a screenshot shows each result. All five are required. A run of only the reported steps never passes.
 - **FAIL:** an expected result from the issue does not happen, or an edge row fails in the behaviour that the issue changes. Also fail when the reported symptom shows on another path in the same build, and give that path's exact steps.
 - **BLOCKED:** the live check cannot run, or no screenshot can show its result, even after you try each way in **Make the live state** and each screen proof. Comment what passed and the open live step, leave the status, and tell the user what the live step needs. Never pass an issue on tests alone.
 - **Note:** a new problem that the issue does not cover. Put it under "Notes" in the comment. It does not fail the issue.

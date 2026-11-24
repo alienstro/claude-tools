@@ -28,6 +28,10 @@ skill does by hand what GitHub does not do for `dev`.
 
   Ask the user to confirm an issue that you found in step 2 or 3. A wrong match closes the
   wrong issue.
+
+  If the user says that the PR has no issue, or if the three searches find no issue, do not
+  ask. Do only step 1 (read the PR state) and step 7 (close the Orca worktree). Skip steps 2
+  to 6. Then write the "No issue" report.
 - One PR can fix more than one issue. Do each step for each issue.
 
 ## Steps
@@ -141,6 +145,17 @@ Issue #<issue> is <closed / still open, because PR #<pr> is not merged>.
 | Worktree folder `<path>` | Present | **Removed** |
 
 <Next step, if any: "Run /close-issue again after PR #<pr> merges.">
+```
+
+When the PR has no issue, use this shorter shape:
+
+```markdown
+PR #<pr> has no issue, so no issue changed.
+
+| | Before | Now |
+| --- | --- | --- |
+| Agent session | Running | **Stopped** (Orca closed <n> terminals) |
+| Worktree folder `<path>` | Present | **Removed** |
 ```
 
 Write "no change" in a row when the link or the state was already there. Leave out the two

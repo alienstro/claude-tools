@@ -7,11 +7,21 @@ One comment per issue. Put the verdict first. Quote bot replies exactly. Give ea
 
 **Fix:** #<PR> (<short sha>). **Tested:** <YYYY-MM-DD> on <surface: Telegram bot name / WhatsApp staging number / console page / API>.
 
+**Coverage:** happy path <passed>/<ran> · edge cases <passed>/<ran> live, <n> not run · edge areas: <Data, Timing, Errors, ...>
+
+### Happy path
 | # | Kind | Persona | Screen | Step | Expected | Actual | Tool | Result |
 |---|---|---|---|---|---|---|---|---|
 | 1 | happy | new | <row of the screen list> | <what you did, with the time> | <expected, from the issue or the PR> | <exact reply or value> | <tool that took the shot> | ✅ |
-| 2 | edge | power | ... | ... | ... | ... | ... | ❌ |
-| 3 | edge | - | ... | ... | ... | not run: <reason> | - | ⏭️ |
+| 2 | happy | power | ... | ... | ... | ... | ... | ✅ |
+| 3 | acceptance | - | ... | ... | ... | ... | ... | ✅ |
+
+### Edge cases
+| # | Area | Persona | Screen | Step | Expected | Actual | Tool | Result |
+|---|---|---|---|---|---|---|---|---|
+| 4 | Errors | new | ... | <step, and the emulation that made the state> | ... | ... | ... | ❌ |
+| 5 | Lifecycle | power | ... | ... | ... | ... | ... | ✅ |
+| 6 | Access | - | ... | ... | ... | not run: <reason, and the emulation method that you tried> | - | ⏭️ |
 
 <For a FAIL: one line "Repro:" with the shortest steps.>
 <For a BLOCKED: one line "Open step:" with who must do what.>
@@ -39,5 +49,7 @@ Rules:
 - Each comment has at least one screenshot of the live result, on every surface, with no exception. Text evidence supports it, but it never replaces it.
 - Add every proof that exists: a screenshot of each screen or page that shows the result, and the text proof. A fix with no page of its own gets a screenshot from any application that shows the result. See **Screen proof for every surface** in `surfaces.md`.
 - Mask personal data: phone numbers, emails, other people's names. Never paste a secret, a token or an env value.
-- The first table holds the live steps on the test environment, and it is never empty. A PASS comment with only the "Code and regression tests" table is not allowed.
+- The "Happy path" and "Edge cases" tables hold the live steps on the test environment. Neither table is empty. Number the rows across both tables.
+- Fill the **Coverage** line from the two tables. It must meet the counts in section 6 of `test-cases.md`.
+- The live tables are never empty. A PASS comment with only the "Code and regression tests" table is not allowed.
 - Say what you did not run, and why.

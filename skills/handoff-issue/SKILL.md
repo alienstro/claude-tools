@@ -1,6 +1,6 @@
 ---
 name: handoff-issue
-description: Use when the user wants a GitHub issue built in its own Orca worktree by a new agent session. Reads the issue, creates an Orca worktree and branch from the base branch, links the issue, starts a Claude (or Codex) session there with a complete task brief, and checks that the brief arrived. By default the agent ends with /do-tests, /create-commit and /create-pr. The PR target is the branch that the user names, such as "pr to dev", or else the target from the conversation, the issue or the repository rules. "local" or "no PR" gives a local commit only. Use it when the user says "/handoff-issue", "create a worktree and implement it there", "open a claude session in that worktree", "hand this issue off", "give issue 123 to another agent", "start a worker on this issue", or "handoff and pr to dev", even if they do not say "Orca".
+description: Use when the user wants a GitHub issue built in its own Orca worktree by a new agent session. Reads the issue, creates an Orca worktree and branch from the base branch, links the issue, starts a Claude (or Codex) session there with a complete task brief, and checks that the brief arrived. By default the agent ends with /code-review medium --fix, /do-tests, /create-commit and /create-pr. The PR target is the branch that the user names, such as "pr to dev", or else the target from the conversation, the issue or the repository rules. "local" or "no PR" gives a local commit only. Use it when the user says "/handoff-issue", "create a worktree and implement it there", "open a claude session in that worktree", "hand this issue off", "give issue 123 to another agent", "start a worker on this issue", or "handoff and pr to dev", even if they do not say "Orca".
 ---
 
 # Hand off an issue
@@ -31,7 +31,7 @@ second session runs.
 
 | The user says | Mode | The agent ends with |
 |---|---|---|
-| `/handoff-issue <issues>` | PR (default) | `/do-tests`, `/create-commit`, then `/create-pr` to the PR target that you find |
+| `/handoff-issue <issues>` | PR (default) | `/code-review medium --fix`, `/do-tests`, `/create-commit`, then `/create-pr` to the PR target that you find |
 | `/handoff-issue <issues> and pr to <branch>` | PR | The same steps, to `<branch>` |
 | `/handoff-issue <issues> local`, "no PR" or "do not push" | Local | A local commit. No push, no PR |
 
@@ -171,7 +171,7 @@ Update these docs: <the docs that state the rule that changes>.
 Rules: follow AGENTS.md. Use test-driven development: change or add tests first.
 <the test limits from team.local.md>.
 <the ending of the mode, from below>
-Do not spawn subagents.
+Do not spawn subagents, except the reviewers that /code-review starts.
 <the final report, from below>
 ```
 
@@ -186,11 +186,14 @@ Do not push and do not open a PR.
 ### Ending: PR mode
 
 ```text
-When the work is done, do these three steps in this order:
-1. Run /do-tests. It checks only the code that you changed. If a check fails, fix it,
-   and run /do-tests again. Do not go to step 2 while a check fails.
-2. Run /create-commit on branch <branch>. Use no AI attribution trailer.
-3. Run /create-pr with the base branch <PR target>. The user approved the push and the PR
+When the work is done, do these four steps in this order:
+1. Run `git add -N .` so that the review sees new files. Then run /code-review medium --fix.
+   Fix each finding that it reports. Skip a false finding, and give the reason in the report.
+   Do not ask the user which findings to fix. One review round only.
+2. Run /do-tests. It checks only the code that you changed. If a check fails, fix it,
+   and run /do-tests again. Do not go to step 3 while a check fails.
+3. Run /create-commit on branch <branch>. Use no AI attribution trailer.
+4. Run /create-pr with the base branch <PR target>. The user approved the push and the PR
    to <PR target> in advance: this brief is that approval, so do not stop to ask for it.
    Use no AI attribution line in the PR body.
 If /do-tests still fails after two fix rounds, do not push. Commit the work, and
@@ -214,6 +217,7 @@ PR: <the full PR URL on its own line>  (Local mode: Commit: <short SHA> on <bran
 |---|---|
 | Branch | <branch> -> <PR target> |
 | Tests | <the pass and fail counts from the last test run> |
+| Review | <the findings that /code-review fixed and skipped, or "Local mode: none"> |
 | Not done | <each item that you could not do, or "None"> |
 
 Changed files:

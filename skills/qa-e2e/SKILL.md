@@ -1,6 +1,6 @@
 ---
 name: qa-e2e
-description: Use when the user wants one issue or many issues tested end to end on a live test environment, with each result proved and recorded. Takes an issue number, a list of issues, or a testing status of a GitHub Project board (such as "For Testing" or "Ready for QA"). Confirms that the test environment runs each fix, tests each fix on each screen that it touches, through the happy path as a new user and as a power user, each acceptance box, each branch of the diff and the edge cases (web page in a browser, desktop or chat app, mobile simulator, API, CLI, background job, or logs and queries for code with no page), with the best tool that the session has (Playwright, the debug port, Chrome DevTools MCP, Claude in Chrome, computer use, a simulator). A live test is required for each issue: regression tests support a verdict but never replace the live check. It posts a comment with a results table, at least one live screenshot of each result, and text evidence on each issue, and moves each issue to the pass status (such as "For Release") or the fail status (such as "Failed Testing"). Can also give only the manual test steps of an issue when the user wants to run them by hand. Use it when the user says "/qa-e2e", "QA the For Testing column", "test all the issues waiting for QA", "QA the board", "test issue 123 end to end", "how can we test this", "give me the e2e steps", or pastes an issue or board URL and asks to test it, even if they do not name a surface or a status.
+description: Use when the user wants one or more issues tested end to end on a live test environment, with proof posted on each issue and the board status moved. Takes an issue, a list of issues, a PR, or a status of a GitHub Project board. Can also give only the manual test steps. Use it when the user says "/qa-e2e", "QA the For Testing column", "test all the issues waiting for QA", "QA the board", "test issue 123 end to end", "how can we test this", "give me the e2e steps", or pastes an issue or board URL and asks to test it, even if they do not name a surface or a status.
 user-invocable: true
 argument-hint: "[Issue #42 | issue URL | PR URL | board URL] (empty = find testable issues)"
 ---
@@ -34,7 +34,7 @@ Read the argument of `/qa-e2e` (or the request) and pick the issues:
 
 **Find the issues that can be tested** (no argument):
 1. If `team.local.md` names a board, take its test status.
-2. Otherwise take the issues of the current repository that are closed as completed in the last 14 days, or that have a merged fix PR, and that have no QA result comment yet (`gh issue list --state closed --search "closed:>=<date> reason:completed"`, then skip each issue whose comments contain "QA result").
+2. Otherwise take the issues of the current repository that are closed as completed in the last 14 days, or that have a merged fix PR (`gh issue list --state closed --search "closed:>=<date> reason:completed"`). Then run `$S/needs_qa.sh <owner/repo> <n>...` and keep each issue that it marks `untested` or `retest`. It marks `retest` when a fix merged after the last PASS or FAIL comment. A BLOCKED or NOT DEPLOYED comment is not a verdict, so that issue stays `untested`.
 3. Keep only the issues whose fix is on the test environment (step 2). List the rest as "not deployed".
 
 For a single issue with no board, skip the status move and post only the comment, unless the issue is on a board in `team.local.md`.
@@ -50,7 +50,7 @@ For a single issue with no board, skip the status move and post only the comment
 ## Rules
 
 - **Test each issue live. This is required.** Each issue gets live checks on the test environment for each row of its case matrix (`references/test-cases.md`): the happy path as a new user and as a power user, each acceptance box, each branch of the diff, and the edge cases. Regression tests and the code at HEAD support a verdict, but they never replace the live check. An issue with no live check cannot pass.
-- **Show each result on each screen. This is required.** Make the screen list of each issue (`references/screens-and-tools.md`). Each row of the list gets a screenshot of its live result, on every surface, with no exception. There is no limit on the number of rows.
+- **Show each result on each screen. This is required.** Make the screen list of each issue (`references/screens-and-tools.md`). Each row of the list gets a screenshot of its live result, on every surface. The one exception is a row whose screen shows nothing new (an empty list, a total with no matching record): that row gets text proof and a reason in its Proof cell (`references/comment-template.md`). Each comment still has at least one screenshot. There is no limit on the number of rows.
 - **Use the tools that this session has.** Find them first, then use the tool order in `references/screens-and-tools.md`. If a tool fails two times, use the next one. Each result names its tool. Text proof supports the screenshot, but it never replaces it. See **Screen proof for every surface** in `references/surfaces.md`.
 - **Open any application that you need for the screen proof.** The user allows you to drive their desktop through computer use (`$S/app.sh`). Open, start or focus any application that can show the live result. Run one GUI test at a time.
 - **Never type a password, a card number, a token or another secret.** If a sign-in page shows, stop and ask the user. The user's own rules can add a test-account exception; follow them.
@@ -91,7 +91,7 @@ git fetch -q origin
 $S/check_deployed.sh <owner/repo> <deployed-sha> <pr> <pr> ...
 ```
 
-A fix that is `NOT-on-staging` cannot pass. Comment that it is not deployed, leave its status, and tell the user. Do the same for a PR that is not merged.
+Keep the build that you read: the comment heading names it. A fix that is `NOT-deployed` cannot pass. Comment that it is not deployed, leave its status, and tell the user. Do the same for a PR that is not merged.
 
 ### 3. Plan each issue
 
@@ -135,7 +135,7 @@ Follow `references/surfaces.md` for each surface. Short form:
 - Change a test-environment setting for a short time, for example a timeout or a threshold. Ask the user first, because the change affects all users of the environment. Record the old value, and restore it when the test ends.
 - Ask the user to do a step that you cannot do (a sign-in, a real device, a payment, a message to real people).
 
-**Add every proof that you can get.** Each comment carries at least one screenshot of the live result, and all the other evidence that exists for its issue: screenshots of each screen or page that shows the result, and the text proof (requests and responses, query counts, log lines, test summaries). When both exist, add both. A screenshot that shows nothing new (an empty list, a total with no matching record) proves nothing. Leave it out and say why. Before you upload a shot, read it, crop it to the region under test, and mask phone numbers, emails and other people's data.
+**Add every proof that you can get.** Each comment carries at least one screenshot of the live result, and all the other evidence that exists for its issue: screenshots of each screen or page that shows the result, and the text proof (requests and responses, query counts, log lines, test summaries). When both exist, add both. A screenshot that shows nothing new (an empty list, a total with no matching record) proves nothing. Leave it out, and write `<tool>: text: <reason>` in the Proof cell of the row. Before you upload a shot, read it, crop it to the region under test, and mask phone numbers, emails and other people's data.
 
 **Put a red box on the proof.** Each screenshot shows a red box around the element that proves the result: the new row, the message, the button, the error text. A reviewer then sees the proof without a search. Draw one box for each point of proof, and no more than three boxes in one shot.
 
@@ -154,14 +154,17 @@ Poll for a slow reply with `app.sh ... wait`. Do not chain `sleep` commands.
 
 ### 6. Decide each verdict
 
-- **PASS:** the fix is on the environment, its regression tests pass, each row of the case matrix passes live or has a written reason (see `references/test-cases.md`), the counts check of `test-cases.md` section 6 passes (two or more happy rows, three or more edge rows live from three or more areas), and a screenshot shows each result. All five are required. A run of only the reported steps never passes.
-- **FAIL:** an expected result from the issue does not happen, or an edge row fails in the behaviour that the issue changes. Also fail when the reported symptom shows on another path in the same build, and give that path's exact steps.
-- **BLOCKED:** the live check cannot run, or no screenshot can show its result, even after you try each way in **Make the live state** and each screen proof. Comment what passed and the open live step, leave the status, and tell the user what the live step needs. Never pass an issue on tests alone.
-- **Note:** a new problem that the issue does not cover. Put it under "Notes" in the comment. It does not fail the issue.
+Use `references/test-cases.md` section 7. It is the only home of the PASS, FAIL, BLOCKED and Note rules. Never pass an issue on tests alone.
+
+Then run `python3 $S/check_coverage.py $W/final/<n>.md` on each PASS or FAIL comment. Copy the Coverage line that it prints, and fix each gap that it names. `post_result.sh` runs the same check and does not post a comment that fails it.
 
 ### 7. Post the proof
 
-Write each comment from `references/comment-template.md`, with one `{{IMG:<file>}}` line per screenshot. Then:
+Write each comment from `references/comment-template.md`, with one `{{IMG:<file>}}` line per screenshot.
+
+Read the build of the test environment again just before each post, the same way as in step 2. A long run can outlive a deploy. If the build changed, run `check_deployed.sh` again, run again each row that the new build can change, and update the heading. Then set `QA_BUILD=<build>` for `post_result.sh`. It does not post a comment whose heading names another build.
+
+Then:
 
 ```bash
 $S/upload_evidence.sh <owner/repo> <evidence-branch> <YYYY-MM-DD>/qa $W/ev/<file> ...
@@ -194,7 +197,8 @@ Also tell the user:
 - each failed issue, with its failed step in one sentence;
 - each blocked issue, with its open step;
 - the notes, with an offer to file them (`create-issue`);
-- the test data and the untracked files that you or a subagent left. Ask before you remove shared test data.
+- the test data and the untracked files that you or a subagent left. Ask before you remove shared test data;
+- each setting of the test environment that you changed, with its old value and proof that you restored it. If a restore failed, say so first.
 
 Close your browser tabs. Remove each container that you started.
 

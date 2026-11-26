@@ -1,11 +1,11 @@
 #!/bin/zsh
 # List the issues in one status column of a GitHub Project board, with the PRs that link to each issue.
-# Usage: list_status.sh <owner> <project-number> <repo owner/name> <out-dir> [status name, default "For Testing"]
+# Usage: list_status.sh <owner> <project-number> <repo owner/name> <out-dir> <status name>
 # Writes <out-dir>/items.json (the whole board) and <out-dir>/column.tsv, and prints the TSV:
 #   issue  state  labels  closer  linked-PRs(number:state:base)  title
 set -e
-OWNER=$1; PROJECT=$2; REPO=$3; OUT=$4; STATUS=${5:-For Testing}
-[ -z "$OUT" ] && { echo "usage: $0 <owner> <project> <repo> <out-dir> [status]"; exit 1; }
+OWNER=$1; PROJECT=$2; REPO=$3; OUT=$4; STATUS=$5
+[ -z "$STATUS" ] && { echo "usage: $0 <owner> <project> <repo> <out-dir> <status>"; exit 1; }
 mkdir -p "$OUT"
 gh project item-list "$PROJECT" --owner "$OWNER" --format json --limit 1000 > "$OUT/items.json"
 R_OWNER=${REPO%%/*}; R_NAME=${REPO##*/}

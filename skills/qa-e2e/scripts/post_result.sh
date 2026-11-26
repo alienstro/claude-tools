@@ -3,10 +3,16 @@
 # Usage: post_result.sh <owner> <project-number> <repo owner/name> <issue> <status name|-> <comment.md>
 #   status "-" posts the comment and leaves the status as it is.
 # The comment file must have no "{{IMG:" placeholder left (run img_links.sh first).
+# A PASS or FAIL comment must pass check_coverage.py.
+# Set QA_BUILD to the build that you read again just before the post; the heading must name it.
 set -e
 OWNER=$1; PROJECT=$2; REPO=$3; N=$4; STATUS=$5; F=$6
 [ -f "$F" ] || { echo "usage: $0 <owner> <project> <repo> <issue> <status|-> <comment.md>"; exit 1; }
 grep -qF '{{IMG:' "$F" && { echo "unresolved image placeholder in $F"; exit 1; }
+python3 "${0:A:h}/check_coverage.py" "$F" || { echo "#$N not posted: fix the case matrix first"; exit 1; }
+if [ -n "$QA_BUILD" ] && ! grep -m1 '^## QA result' "$F" | grep -qF "$QA_BUILD"; then
+  echo "#$N not posted: the environment now runs $QA_BUILD, not the build in the heading; check again"; exit 1
+fi
 gh issue comment "$N" --repo "$REPO" --body-file "$F" >/dev/null
 [ "$STATUS" = "-" ] && { echo "#$N commented, status unchanged"; exit 0; }
 CACHE=${TMPDIR:-/tmp}/qa-e2e-ids-$OWNER-$PROJECT.json

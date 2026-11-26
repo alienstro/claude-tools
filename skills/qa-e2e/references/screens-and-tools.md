@@ -82,4 +82,4 @@ node ~/.claude/skills/do-screenshots/scripts/shot.js --url file://<path>.html --
 
 ## 5. Record the tool
 
-Each result names the tool that took its shot (a "Tool" column, or one line under the shot). When a tool failed and you used the next one, say which tool failed and why.
+Each result names the tool that took its shot (the Proof column, as `<tool>: <file>`, or one line under the shot). When a tool failed and you used the next one, say which tool failed and why.

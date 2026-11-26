@@ -20,8 +20,8 @@ Do all five. Each source gives rows that the other sources do not give.
    each new branch, each early return and each fallback value gives one row that makes
    that branch run. Example: a fix that adds `title || firstStep || "Untitled"` gives
    three rows: a title, no title with a first step, and neither.
-4. **The edge-case list** in section 2. Take each line that applies to the change. Write
-   "not applicable" and the reason for each line that you skip.
+4. **The edge-case list** in section 2. Take each line that applies to the change. Each
+   area gets a row, or a "Not applicable" reason in the comment (section 6).
 5. **The project's own cases.** If `team.local.md` has an "Edge cases" list for the
    project (its known weak spots, its roles, its plans), add each line that applies.
 
@@ -37,6 +37,8 @@ Do all five. Each source gives rows that the other sources do not give.
 | Roles and plans | Each role (admin, member, guest), each plan or tier, an account with no data, an account at a limit (no credit, a full quota) |
 | Layout | A narrow window, phone width (390 px), a large window, side panels open and closed, a long name that wraps, a translated text that is longer |
 | Access | Keyboard only, the focus after the action, "reduce motion" on, screen-reader text of new controls, the contrast of new colours |
+| Isolation | A person from another account, workspace or company cannot see or change the record: open its direct link, guess its ID, call its API with the other person's session. The reply is a refusal, not the data |
+| Time | A time zone that is not the server's, a time near midnight or the end of a month, a daylight-saving change, the local date format, a record from a past period |
 | Neighbours | The features beside the change: the other callers of each changed function, and the screens that use the same component. Check that they still work |
 
 For a surface with no page (API, CLI, job), read "click" as "request" or "command", and
@@ -78,18 +80,14 @@ Put the matrix in the plan of the issue. Use one row for each case:
 
 `| # | Kind (happy / acceptance / branch / edge) | Persona | Area | Case | Steps | Expected | Screen |`
 
-Give each edge row its area from section 2 (Data, Entry points, Timing, Lifecycle, Errors,
-Roles and plans, Layout, Access, Neighbours). Give the other rows `-`.
+Give each edge row its area, with the exact name from the first column of section 2. Give
+the other rows `-`.
 
 Rules for the matrix:
 
-- At least two happy-path rows (one for each persona) and at least three edge rows for
-  each issue. A one-line fix still gets its edge rows, because a small fix often breaks
-  the next path.
-- The edge rows come from at least three different areas. Three rows of one area (for
-  example three long texts) count as one area.
-- Each issue gets one **Errors** row and one **Lifecycle** row (a reload, a restart or a
-  sign-out and sign-in), unless the change cannot reach them. Write the reason for a skip.
+- The matrix meets the counts of section 6. A one-line fix still gets its edge rows,
+  because a small fix often breaks the next path.
+- Three rows of one area (for example three long texts) count as one area.
 - Each acceptance box has its own row.
 - Each branch of the diff has its own row.
 - For a fix of a flash, a flicker or an animation, take a burst of frames (8 or more
@@ -124,7 +122,12 @@ in the reason of each row that is still not run.
 | After a reload or a restart | Reload the page, or quit and start the app again |
 
 A row that needs a real device, a real payment or a second real account stays "not run".
-Give the reason.
+Write its Actual cell as `not run: <reason>; tried: <method, or none possible>`.
+
+### A row that fails one time
+
+Run a failed row one more time. If it passes on the second run, mark it ⚠️ (flaky) and give
+both results. A flaky row is not a pass. Section 7 gives its verdict.
 
 ## 6. Check the counts before you post
 
@@ -133,19 +136,38 @@ fails this check. Run the missing rows first.
 
 - Happy-path rows: two or more, one for each persona, and each one ran live.
 - Edge rows that ran live: three or more, from three or more areas.
-- An Errors row and a Lifecycle row ran live, or the comment gives the reason for a skip.
+- An Errors row and a Lifecycle row, or a reason under "Not applicable".
+- Each area of section 2 has a row, or a reason under "Not applicable".
 - Each "not run" row names the emulation method that you tried, or why no method works.
+- Each live row names its proof: a screenshot file, or `text: <reason>` (`SKILL.md`, rules).
+
+`scripts/check_coverage.py <comment.md>` checks these rules and prints the Coverage line
+that the tables give. `post_result.sh` runs it and does not post a PASS or FAIL comment
+that fails it. It reads the area names from the section 2 table, so a new area there
+applies at once.
 
 ## 7. Verdict from the matrix
 
-- **PASS:** every happy-path, acceptance and branch row passes live, and each edge row
-  passes or is "not applicable" with a reason.
+This section is the only home of the verdict rules. `SKILL.md` and the subagent brief
+point here.
+
+- **PASS:** all of these are true:
+  1. The fix is on the test environment (`check_deployed.sh` says `deployed`).
+  2. Its regression tests pass.
+  3. Every happy-path, acceptance and branch row passes live.
+  4. Each edge row passes, is "not run" with a reason, or its area is "Not applicable"
+     with a reason. No row failed and no row is flaky.
+  5. The counts of section 6 pass.
+  6. A screenshot shows each result (`SKILL.md`, rules).
 - **FAIL:** a row fails in the behaviour that the issue changes. This includes an edge
-  row. Give the exact steps of that row.
+  row and a flaky row. Give the exact steps of that row. Also fail when the reported
+  symptom shows on another path in the same build, and give that path's exact steps.
 - **Note:** a row fails in a feature that the issue does not change. Put it under "Notes"
   and offer to file it with `create-issue`.
 - **BLOCKED:** a happy-path or acceptance row cannot run live, or fewer than three edge
-  rows ran live after you tried each emulation method. Other edge rows that cannot run go
+  rows ran live after you tried each emulation method and each way in **Make the live
+  state** (`SKILL.md`, step 5). Comment what passed and the open live step, and leave the
+  status. Other edge rows that cannot run go
   in the comment as "not run", with the reason. They do not block the issue, but the
   report names them.
 

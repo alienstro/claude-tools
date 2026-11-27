@@ -70,14 +70,8 @@ skill does by hand what GitHub does not do for `dev`.
    is still open, write `Fix in review: #<pr>.` Keep the comment to one line. The PR holds the
    details.
 
-4. **Close the issue only when the PR is merged.**
-   - PR merged and issue open: `gh issue close <issue> --reason completed`.
-   - PR merged and issue already closed: do nothing. GitHub closes it by itself for a PR to the
-     default branch.
-   - PR open: do not close. Tell the user to run `/close-issue` again after the merge. A PR in
-     review can still change, close, or get a revert.
-
-5. **Check that the fix can reach the test environment.** Find the branch that the test
+4. **Check that the fix can reach the test environment.** Skip this step when the PR is
+   still open. Find the branch that the test
    environment deploys: read `team.local.md`, `AGENTS.md`, or `on.push.branches` of the deploy
    workflow. When the PR base is a different branch, such as a feature branch or a stack
    branch, check that the deploy branch holds the merge commit:
@@ -87,11 +81,18 @@ skill does by hand what GitHub does not do for `dev`.
    ```
 
    `behind` or `identical` means that the deploy branch holds the fix. For each other answer,
-   do not do step 6. Add one comment: `Merged into \`<base>\`. Not on \`<deploy branch>\` yet.`
+   do not do steps 5 and 6: do not close the issue and do not move the card. Add one comment: `Merged into \`<base>\`. Not on \`<deploy branch>\` yet.`
    Tell the user which PR must merge first. A tester cannot test a fix that the test
    environment does not run.
 
-6. **Move the card on the board.** Do this step only after step 4 closed the issue, or found it
+5. **Close the issue only when the PR is merged.**
+   - PR merged and issue open: `gh issue close <issue> --reason completed`.
+   - PR merged and issue already closed: do nothing. GitHub closes it by itself for a PR to the
+     default branch.
+   - PR open: do not close. Tell the user to run `/close-issue` again after the merge. A PR in
+     review can still change, close, or get a revert.
+
+6. **Move the card on the board.** Do this step only after step 5 closed the issue, or found it
    closed. A board can have a rule "Item closed → Done", and that rule fires on the close.
    A status that you set after the close replaces the status of that rule.
 

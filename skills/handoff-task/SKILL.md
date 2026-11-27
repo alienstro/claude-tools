@@ -118,7 +118,8 @@ In the report, name the PR target and the rule that chose it, so the user can st
    agent.
 8. **Report** to the user: the worktree path, the branch, the agent handle, and a short list
    of what the brief tells the agent to do. In PR mode, name the PR target and the rule that
-   chose it. Tell the user that the agent pushes and opens the PR by itself.
+   chose it, and say if CI runs for that target (see "Does CI run on the PR target?").
+   Tell the user that the agent pushes and opens the PR by itself.
 9. **Watch the agent until it ends.** Do not stop after the report. Start one background
    Bash command (`run_in_background: true`) for each agent. It checks the terminal every 60
    seconds and uses no tokens until it exits. Do not poll the terminal yourself:
@@ -203,15 +204,18 @@ When the work is done, do these five steps in this order:
    states of a flow.
 2. Run /do-tests. It checks the code that you changed and the tests that read it. If a
    check fails, fix it, and run /do-tests again. Do not go to step 3 while a check fails.
-   When the change touches a build file, a container file, a deploy workflow, an installer
-   or a new entry point of the app, run /do-ci in place of /do-tests.
 3. Run /create-commit on branch <branch>. Use no AI attribution trailer.
+   When the change touches a build file, a container file, a deploy workflow, an installer
+   or a new entry point of the app, run /do-ci now, after the commit, because /do-ci tests
+   only the last commit. If it fails, fix it one time, commit again, and report the result.
 4. Run /create-pr with the base branch <PR target>. The user approved the push and the PR
    to <PR target> in advance: this brief is that approval, so do not stop to ask for it.
    The PR links no issue. Use no AI attribution line in the PR body.
-5. Read the checks of the PR with `gh pr checks <PR>`. If the PR has checks, wait for them
-   with `gh pr checks <PR> --watch`, and fix a failed check. If the PR has no checks, write
-   "none run on this PR" in the Checks row of the report.
+5. Wait 30 seconds, then read the checks with `gh pr checks <PR>`. If the PR has no checks,
+   write "none run on this PR" in the Checks row of the report. If checks run, read them
+   again each minute, for 10 minutes at most. Do not use `--watch`. If a check fails, fix it
+   one time, push, and read the checks again. Report the last state: passed, failed or
+   still running.
 If /do-tests still fails after two fix rounds, do not push. Commit the work, and
 report the failed check and its output.
 ```
@@ -236,7 +240,7 @@ PR: <the full PR URL on its own line>  (Local mode: Commit: <short SHA> on <bran
 | Tests | <the pass and fail counts from the last test run> |
 | Review | <the findings that /code-review fixed and skipped, or "Local mode: none"> |
 | Other places | <each place with the same problem: fixed, or not fixed and why. Or "None found"> |
-| Checks | <the PR checks: passed, failed, or "none run on this PR". Local mode: "none"> |
+| Checks | <the PR checks: passed, failed, still running, or "none run on this PR". Local mode: "none"> |
 | Not done | <each item that you could not do, or "None"> |
 
 Changed files:

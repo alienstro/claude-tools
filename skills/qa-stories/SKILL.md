@@ -58,6 +58,8 @@ Write one story for each "Done when" item, and one story for each "works as befo
 - **Expected:** the exact text or state that shows the result.
 - **Proof:** the screenshot (what it shows, where the red box goes) and the text proof.
 
+Add the edge stories. Read `~/.claude/skills/qa-e2e/references/test-cases.md` sections 1 and 2, and write one story for each area that applies to the change. A branch that passes only its "Done when" stories ships the bugs next to them.
+
 Add a control story when the change hides something: the same page on the surface that must not show it (for example, the web browser for a desktop-only row).
 
 Then make the screen list from `screens-and-tools.md`: each surface, platform, way in, state, role, theme, width and control screen that the change touches. Give each row a story and a tool. A row with no story gets a new story.

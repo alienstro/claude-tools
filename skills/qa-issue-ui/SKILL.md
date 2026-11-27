@@ -10,6 +10,7 @@ Check that a fix works on a live staging site, and prove it with screenshots, wi
 ## Rules
 
 - **Do not change shared data.** Before you click a control that writes (save, send, delete, close, activate, sign out), install the write guard from `scripts/guard.js`. The guard keeps the request in the browser. A test that needs a real write needs a "yes" from the user first, and a test record that the user owns.
+- **A stopped write proves the page only.** The server did not get the request, so its result and its effect on other users are not tested. Write the result of such a row as **Pass (page only)**, and name the server effect under the table as not tested. If the issue changes the server effect, ask the user for a real write on a test record, or use `qa-issue-api`.
 - **Do not send a message to a real person.** An email, a chat message or an invite to a real address is a real write, even on staging.
 - **Look before you report.** Read each screenshot with the Read tool before you put it in the report.
 - **Keep the repository clean.** The MCP saves files only inside the workspace root. Move each screenshot to the scratchpad at once, and run `git status --short` at the end.
@@ -27,6 +28,7 @@ Check that a fix works on a live staging site, and prove it with screenshots, wi
    - The page and its URL. Search the route file of the app, not the menu.
    - The control to use, and the text or state that shows a pass.
    - The kind of action: read-only, a write that the guard can stop, or a write that the guard cannot stop. Ask the user before a check of the last kind.
+   - The edge cases. If `~/.claude/skills/qa-e2e/references/test-cases.md` exists, read its sections 1 and 2, and add one row for each area that applies to this change. As a minimum, add: each option of a list that the changed code reads, each other page that shows the same value, each other cause of the same symptom, and the same action two times.
    - A check that needs data that does not exist, such as a button on a record that is not there. Say so and skip it, or ask the user for test data.
 3. **Open the page.** Run `list_pages`. Use the page that is already signed in to the site, and go to the URL with `navigate_page`. Do not open a new browser.
 4. **Install the guard.** Copy the function from `scripts/guard.js`. Set `GUARD_PATH` to a part of the URL that each write of the page contains, and set `DELAY_MS` to `10000`. Run it with `evaluate_script`. A reload removes the guard, so install it again after each reload.

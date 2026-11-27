@@ -30,8 +30,8 @@ skill does by hand what GitHub does not do for `dev`.
   wrong issue.
 
   If the user says that the PR has no issue, or if the three searches find no issue, do not
-  ask. Do only step 1 (read the PR state) and step 7 (close the Orca worktree). Skip steps 2
-  to 6. Then write the "No issue" report.
+  ask. Do only step 1 (read the PR state) and step 8 (close the Orca worktree). Skip steps 2
+  to 7. Then write the "No issue" report.
 - One PR can fix more than one issue. Do each step for each issue.
 
 ## Steps
@@ -70,14 +70,29 @@ skill does by hand what GitHub does not do for `dev`.
    is still open, write `Fix in review: #<pr>.` Keep the comment to one line. The PR holds the
    details.
 
-4. **Close the issue only when the PR is merged.**
+4. **Check that the fix can reach the test environment.** Skip this step when the PR is
+   still open. Find the branch that the test
+   environment deploys: read `team.local.md`, `AGENTS.md`, or `on.push.branches` of the deploy
+   workflow. When the PR base is a different branch, such as a feature branch or a stack
+   branch, check that the deploy branch holds the merge commit:
+
+   ```sh
+   gh api repos/<owner>/<name>/compare/<deploy branch>...<merge commit sha> --jq .status
+   ```
+
+   `behind` or `identical` means that the deploy branch holds the fix. For each other answer,
+   do not do steps 5 and 6: do not close the issue and do not move the card. Add one comment: `Merged into \`<base>\`. Not on \`<deploy branch>\` yet.`
+   Tell the user which PR must merge first. A tester cannot test a fix that the test
+   environment does not run.
+
+5. **Close the issue only when the PR is merged.**
    - PR merged and issue open: `gh issue close <issue> --reason completed`.
    - PR merged and issue already closed: do nothing. GitHub closes it by itself for a PR to the
      default branch.
    - PR open: do not close. Tell the user to run `/close-issue` again after the merge. A PR in
      review can still change, close, or get a revert.
 
-5. **Move the card on the board.** Do this step only after step 4 closed the issue, or found it
+6. **Move the card on the board.** Do this step only after step 5 closed the issue, or found it
    closed. A board can have a rule "Item closed → Done", and that rule fires on the close.
    A status that you set after the close replaces the status of that rule.
 
@@ -90,7 +105,7 @@ skill does by hand what GitHub does not do for `dev`.
    "For Testing" status, the script does not change that card. Tell the user the statuses
    that the board has. If the PR is still open, skip this step.
 
-6. **Check the result.** Read the issue state and the PR body again:
+7. **Check the result.** Read the issue state and the PR body again:
 
    ```sh
    gh issue view <issue> --json state,stateReason
@@ -99,7 +114,7 @@ skill does by hand what GitHub does not do for `dev`.
 
    Run the board script again with `--dry-run`. It must say `already set` for each board.
 
-7. **Close the Orca worktree.** Do this step only when the PR is merged. Skip it when the PR is
+8. **Close the Orca worktree.** Do this step only when the PR is merged. Skip it when the PR is
    open, because the agent can still need to fix review comments.
    - Find the worktree with `orca worktree show --worktree issue:<issue> --json`. If none
      matches, try `branch:<PR head branch>`. If none matches again, skip this step.
@@ -159,7 +174,7 @@ PR #<pr> has no issue, so no issue changed.
 ```
 
 Write "no change" in a row when the link or the state was already there. Leave out the two
-worktree rows when step 7 found no worktree or the PR is still open.
+worktree rows when step 8 found no worktree or the PR is still open.
 
 ## Rules
 

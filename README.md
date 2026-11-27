@@ -39,10 +39,10 @@ Each hook also needs an entry in `~/.claude/settings.json`. See the hook section
 | `create-pr` | Opens a pull request with a short summary, a behaviour table and a size table. |
 | `edit-pr` | Rewrites the title and the description of a pull request in the same format. |
 | `create-issue` | Opens a GitHub issue in a team format and sets the type, the labels and the project fields. |
-| `close-issue` | Links a PR to its issue, closes the issue after the merge, and sets the board status to "For Testing". |
+| `close-issue` | Links a PR to its issue, closes the issue after the merge, and sets the board status to "For Testing" when the fix is on the deploy branch. |
 | `issues-version` | Sets the release version on shipped issues and moves them out of the testing columns. |
 | `create-release-notes` | Drafts the release notes for the next release from the PRs since the last tag. |
-| `do-tests` | Runs only the checks for the changed code, or the full gate, with memory limits. |
+| `do-tests` | Runs the checks for the changed code and the tests that read it, or the full gate, with memory limits. |
 | `do-ci` | Runs the CI workflow steps on a clean copy of the last commit, as the CI runner does. |
 | `do-screenshots` | Takes a headless Playwright screenshot of a UI change and reports it in a table. |
 | `qa-verification` | Checks a change through the real user workflow and records the evidence. |

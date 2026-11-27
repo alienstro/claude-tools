@@ -53,8 +53,9 @@ For a single issue with no board, skip the status move and post only the comment
 - **Show each result on each screen. This is required.** Make the screen list of each issue (`references/screens-and-tools.md`). Each row of the list gets a screenshot of its live result, on every surface. The one exception is a row whose screen shows nothing new (an empty list, a total with no matching record): that row gets text proof and a reason in its Proof cell (`references/comment-template.md`). Each comment still has at least one screenshot. There is no limit on the number of rows.
 - **Use the tools that this session has.** Find them first, then use the tool order in `references/screens-and-tools.md`. If a tool fails two times, use the next one. Each result names its tool. Text proof supports the screenshot, but it never replaces it. See **Screen proof for every surface** in `references/surfaces.md`.
 - **Open any application that you need for the screen proof.** The user allows you to drive their desktop through computer use (`$S/app.sh`). Open, start or focus any application that can show the live result. Run one GUI test at a time.
-- **Never type a password, a card number, a token or another secret.** If a sign-in page shows, stop and ask the user. The user's own rules can add a test-account exception; follow them.
-- **Do not spend money.** Never approve a purchase, a payment, a wallet send or a paid call. Cancel each such prompt. Get test credit only through the free path that `team.local.md` names.
+- **Never type a password, a card number, a token or another secret.** If a sign-in page shows, stop and ask the user. The user's own rules can add a test-account exception; follow them. A public test card of a payment provider that `team.local.md` names is not a secret.
+- **Do not spend real money.** Never approve a purchase, a payment, a wallet send or a paid call that costs real money. Cancel each such prompt. Get test credit only through the free path that `team.local.md` names. A payment in the test mode of the payment provider is allowed only when `team.local.md` names the test method, such as a test card.
+- **Test the risk first.** In a run of many issues, test first the issues that change money, access or the states of a flow. Do not remove rows from a matrix to finish a large run. A smaller run with full matrices is correct, and the report names the issues that are left.
 - **Do not change shared data that you do not own.** Use read-only checks, or test data that you make and name `qa<issue>`. List all test data for the user at the end.
 - **Never act on a production target.** `team.local.md` names the test targets and the production targets that look the same.
 - **Never capture or upload a secret.** Look at the whole window before the first shot. Crop each shot to the region under test.
@@ -133,7 +134,8 @@ Follow `references/surfaces.md` for each surface. Short form:
 
 - Make your own test data (`qa<issue>`), or trigger the job or the timer.
 - Change a test-environment setting for a short time, for example a timeout or a threshold. Ask the user first, because the change affects all users of the environment. Record the old value, and restore it when the test ends.
-- Ask the user to do a step that you cannot do (a sign-in, a real device, a payment, a message to real people).
+- For a payment or a paid call, use the test method that `team.local.md` names.
+- Ask the user to do a step that you cannot do (a sign-in, a real device, a payment with real money, a message to real people).
 
 **Add every proof that you can get.** Each comment carries at least one screenshot of the live result, and all the other evidence that exists for its issue: screenshots of each screen or page that shows the result, and the text proof (requests and responses, query counts, log lines, test summaries). When both exist, add both. A screenshot that shows nothing new (an empty list, a total with no matching record) proves nothing. Leave it out, and write `<tool>: text: <reason>` in the Proof cell of the row. Before you upload a shot, read it, crop it to the region under test, and mask phone numbers, emails and other people's data.
 
@@ -155,6 +157,8 @@ Poll for a slow reply with `app.sh ... wait`. Do not chain `sleep` commands.
 ### 6. Decide each verdict
 
 Use `references/test-cases.md` section 7. It is the only home of the PASS, FAIL, BLOCKED and Note rules. Never pass an issue on tests alone.
+
+At the end of the run, list the fixtures that the BLOCKED comments name, one time each. Offer to add them to `team.local.md`, so that the same reason does not block the next run.
 
 Then run `python3 $S/check_coverage.py $W/final/<n>.md` on each PASS or FAIL comment. Copy the Coverage line that it prints, and fix each gap that it names. `post_result.sh` runs the same check and does not post a comment that fails it.
 

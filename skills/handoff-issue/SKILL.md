@@ -21,6 +21,16 @@ repository.
 When `team.local.md` does not exist, read the `AGENTS.md` or `CLAUDE.md` of the repository
 for the gate command and the test rules. Ask the user for a value that you cannot find.
 
+## Does CI run on the PR target?
+
+Do not assume that CI checks the PR. Many repositories run CI only for a PR to the default
+branch. Read `on.pull_request` in each file of `.github/workflows/` (or the CI file of the
+host), and look for the PR target in `branches`. The workflow file wins over a sentence in
+`team.local.md` or `AGENTS.md`.
+
+When no workflow runs for the PR target, `/do-tests` is the only check before the merge. Say
+this in the report of the handoff, so that the user knows it.
+
 ## Caution: a second session uses memory
 
 Each new agent session uses its own memory and CPU. On a small machine, start a session
@@ -124,7 +134,8 @@ In the report, name the PR target and the rule that chose it, so the user can st
    the user. If a call fails, tell the user, and do not stop the handoff.
 10. **Report** to the user: the worktree path, the branch, the agent handle, the assignee, the
    board status of each issue (moved, or not moved and why), and a short list of what the
-   brief tells the agent to do. In PR mode, name the PR target and the rule that chose it.
+   brief tells the agent to do. In PR mode, name the PR target and the rule that chose it,
+   and say if CI runs for that target (see "Does CI run on the PR target?").
    Tell the user that the agent pushes and opens the PR by itself.
 11. **Watch the agent until it ends.** Do not stop after the report. Start one background
    Bash command (`run_in_background: true`) for each agent. It checks the terminal every 60
@@ -169,6 +180,13 @@ Do not change: <the out-of-scope parts of the issue, by name>.
 Update these docs: <the docs that state the rule that changes>.
 
 Rules: follow AGENTS.md. Use test-driven development: change or add tests first.
+Before you change code, list the existing behaviour that the change can affect: the callers
+of each function that you change, the state that they share, and the user texts that they show.
+Run the tests of those parts first, so that you know that they pass before your change.
+Write one test for each "Done when" item. For a bug, the test must fail before the fix.
+Search the repository for the same problem in other places: each platform, channel, role and
+flow that has the same logic. Fix the shared code one time. If you do not fix a place, name it
+under "Not done".
 <the test limits from team.local.md>.
 <the ending of the mode, from below>
 Do not spawn subagents, except the reviewers that /code-review starts.
@@ -186,16 +204,26 @@ Do not push and do not open a PR.
 ### Ending: PR mode
 
 ```text
-When the work is done, do these four steps in this order:
+When the work is done, do these five steps in this order:
 1. Run `git add -N .` so that the review sees new files. Then run /code-review medium --fix.
    Fix each finding that it reports. Skip a false finding, and give the reason in the report.
-   Do not ask the user which findings to fix. One review round only.
-2. Run /do-tests. It checks only the code that you changed. If a check fails, fix it,
-   and run /do-tests again. Do not go to step 3 while a check fails.
+   Do not ask the user which findings to fix. One review round only. Use `high` in place of
+   `medium` when the change touches money, sign-in, permissions, a data migration or the
+   states of a flow.
+2. Run /do-tests. It checks the code that you changed and the tests that read it. If a
+   check fails, fix it, and run /do-tests again. Do not go to step 3 while a check fails.
 3. Run /create-commit on branch <branch>. Use no AI attribution trailer.
+   When the change touches a build file, a container file, a deploy workflow, an installer
+   or a new entry point of the app, run /do-ci now, after the commit, because /do-ci tests
+   only the last commit. If it fails, fix it one time, commit again, and report the result.
 4. Run /create-pr with the base branch <PR target>. The user approved the push and the PR
    to <PR target> in advance: this brief is that approval, so do not stop to ask for it.
    Use no AI attribution line in the PR body.
+5. Wait 30 seconds, then read the checks with `gh pr checks <PR>`. If the PR has no checks,
+   write "none run on this PR" in the Checks row of the report. If checks run, read them
+   again each minute, for 10 minutes at most. Do not use `--watch`. If a check fails, fix it
+   one time, push, and read the checks again. Report the last state: passed, failed or
+   still running.
 If /do-tests still fails after two fix rounds, do not push. Commit the work, and
 report the failed check and its output.
 ```
@@ -218,6 +246,9 @@ PR: <the full PR URL on its own line>  (Local mode: Commit: <short SHA> on <bran
 | Branch | <branch> -> <PR target> |
 | Tests | <the pass and fail counts from the last test run> |
 | Review | <the findings that /code-review fixed and skipped, or "Local mode: none"> |
+| Done when | <each item with the test that proves it, or "not tested"> |
+| Other places | <each place with the same problem: fixed, or not fixed and why. Or "None found"> |
+| Checks | <the PR checks: passed, failed, still running, or "none run on this PR". Local mode: "none"> |
 | Not done | <each item that you could not do, or "None"> |
 
 Changed files:
@@ -238,4 +269,4 @@ Change other rules only when the user asks.
 | You stop after the report | The user must ask "is it done?" | Run the step 11 watch until it exits |
 | You poll the terminal yourself every minute | Each check uses tokens and context | Run the watch as one background command |
 | PR mode with no approval line in the brief | `/create-pr` stops to confirm the base, and the agent waits for nobody | Keep the "approved in advance" line |
-| PR mode with `pnpm run verify` as the gate | Turbo with no limits runs many tasks at once and lags the machine | Use `/do-tests`, which checks only the changed code. CI runs `pnpm run verify` on the PR |
+| PR mode with `pnpm run verify` as the gate | Turbo with no limits runs many tasks at once and lags the machine | Use `/do-tests`. Do not assume that CI runs on the PR. See "Does CI run on the PR target?" |

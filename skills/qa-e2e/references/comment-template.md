@@ -26,7 +26,7 @@ One comment per issue. Put the verdict first. Quote bot replies exactly. Give ea
 | 7 | Access | - | ... | ... | ... | not run: <reason>; tried: <emulation method, or none possible> | - | ⏭️ |
 
 <For a FAIL: one line "Repro:" with the shortest steps.>
-<For a BLOCKED: one line "Open step:" with who must do what.>
+<For a BLOCKED: one line "Open step:" with who must do what, and one line "Fixture:" with the thing that the test environment needs for that step.>
 <If you changed a setting of the test environment: one line "Restored: <setting> to <old value> at <time>".>
 
 **Notes (not part of this fix, please triage):**

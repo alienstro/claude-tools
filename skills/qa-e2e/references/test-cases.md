@@ -30,8 +30,8 @@ Do all five. Each source gives rows that the other sources do not give.
 | Area | Cases to try |
 |---|---|
 | Data | Empty value, one item, many items, a very long text, emoji and non-Latin text, a value with only spaces, a missing or `null` field from the server, the largest and smallest allowed number |
-| Entry points | Each place that shows or calls the same code (each page, each screen, each client: web, desktop, mobile, bot, API), and each way to start the action (click, keyboard, shortcut, menu, deep link, command) |
-| Timing | A slow response, an action while another runs, a second click or request before the first ends, a move to another screen while the result arrives, a return to the window or app, a timer or a refresh that fires during the action |
+| Entry points | Each place that shows or calls the same code (each page, each screen, each client: web, desktop, mobile, bot, API), and each way to start the action (click, keyboard, shortcut, menu, deep link, command). Each option of a list that the changed code reads (each runtime, provider, plan, channel or type), not only the first option |
+| Timing | A slow response, an action while another runs, a second click or request before the first ends, a move to another screen while the result arrives, a return to the window or app, a timer or a refresh that fires during the action, the same action two or three times in one session |
 | Lifecycle | After a reload, after an app restart, after a sign-out and sign-in, records that existed before the fix, a first-time user with no data |
 | Errors | A server error (4xx, 5xx), no network, a refusal, a timeout, invalid input. The user sees a plain message and does not lose their input |
 | Roles and plans | Each role (admin, member, guest), each plan or tier, an account with no data, an account at a limit (no credit, a full quota) |
@@ -39,7 +39,7 @@ Do all five. Each source gives rows that the other sources do not give.
 | Access | Keyboard only, the focus after the action, "reduce motion" on, screen-reader text of new controls, the contrast of new colours |
 | Isolation | A person from another account, workspace or company cannot see or change the record: open its direct link, guess its ID, call its API with the other person's session. The reply is a refusal, not the data |
 | Time | A time zone that is not the server's, a time near midnight or the end of a month, a daylight-saving change, the local date format, a record from a past period |
-| Neighbours | The features beside the change: the other callers of each changed function, and the screens that use the same component. Check that they still work |
+| Neighbours | The features beside the change: the other callers of each changed function, and the screens that use the same component. Check that they still work. Each other page, export or message that shows the same value shows the same value. Each other cause that leads to the same message or state gets the correct message |
 
 For a surface with no page (API, CLI, job), read "click" as "request" or "command", and
 "screen" as "response", "output" or "log line".
@@ -121,7 +121,9 @@ in the reason of each row that is still not run.
 | A first-time user | Make a new test record or a new `qa<issue>` workspace |
 | After a reload or a restart | Reload the page, or quit and start the app again |
 
-A row that needs a real device, a real payment or a second real account stays "not run".
+A row that needs a real device, a payment with real money or a second real account stays
+"not run". A payment in the test mode of the payment provider is not a real payment: run
+it when `team.local.md` names the test method.
 Write its Actual cell as `not run: <reason>; tried: <method, or none possible>`.
 
 ### A row that fails one time
@@ -170,5 +172,13 @@ point here.
   status. Other edge rows that cannot run go
   in the comment as "not run", with the reason. They do not block the issue, but the
   report names them.
+
+- **Effect not proven:** a row that stops before a write (a send, a save, a payment)
+  proves the screen only. Its effect on the server and on the receiver is not proven. When
+  the issue changes that effect, the row is an acceptance row that did not run, so the
+  verdict is BLOCKED, not PASS. Name the effect in the comment.
+- **Name the fixture:** each BLOCKED comment names the exact thing that the test
+  environment needs for the open step: a test account of a role, a record in a state, or
+  a payment test method. The next run then starts with it.
 
 Never mark an issue PASS when only the reported steps ran.

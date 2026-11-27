@@ -10,7 +10,7 @@ Run the checks of the repository and report the real result. Every run ends with
 ## Modes
 
 - **Changed (default):** `/do-tests` checks only the code that the branch changes. Use this mode for fast feedback.
-- **Full:** `/do-tests full` runs the gate through Turbo on the changed packages and on every package that imports them. Run it one time before a merge. A changed-only run does not replace it, because it cannot find a break in code that imports the changed code.
+- **Full:** `/do-tests full` runs the gate through Turbo on the changed packages and on every package that imports them. Run it one time before a merge. A changed-only run does not replace it, because it does not typecheck or build the packages that import the changed code.
 
 ## Setup (both modes)
 
@@ -26,7 +26,10 @@ Run the checks of the repository and report the real result. Every run ends with
    Remove deleted files, generated files, `dist/` and lockfiles from the list.
 2. Find the tests to run, and group them by package (the nearest `package.json`):
    - Each changed test file (`*.test.ts`, `*.test.tsx`, `*.spec.ts`).
-   - For each changed source file, the test that names it. Search with `rg -l "<basename without extension>" -g '*.test.*' -g '*.spec.*'` inside its package.
+   - For each changed source file, each test that names it or imports it. Search the whole repository, not only its package: `rg -l "<basename without extension>" -g '*.test.*' -g '*.spec.*'`. A test in a different package can read the changed file.
+   - For each thing that the diff removes or renames: an exported name, a user text, a route, a test id or a list entry. Read the removed lines with `git diff <merge-base> | rg '^-[^-]'`. Search the whole repository for each one, and run each test that still names it. A test that expects the old thing fails only after the merge.
+   - Each guard test: a test that reads the source files as text, such as a banned word check or a style check. Any changed file can fail it, so run it on each run. Find these tests in `AGENTS.md`, or search the test files for a read of the source tree.
+   - When the diff changes a prompt, an instruction file or a tool description, and the repository has an eval set: run the eval cases of that part, and add one case for this change. If the repository has no eval set, name the change as `(not tested)` in the report. A unit test does not prove the behaviour of a model.
 3. Read the `test` script of each package to find its runner. Run only the selected files with that runner:
    - `node --test` or `tsx --test`: pass the files in place of the glob, keep every flag and `--import` of the script.
    - Jest: use `--runTestsByPath <files>`, and keep `--config` and `--selectProjects`. Without `--runTestsByPath`, Jest can run the whole suite.
@@ -66,7 +69,8 @@ Never skip the report or the table. These cases still need both:
 Put the table under the heading `### Before / Now`. Before you start the next step or end the turn, check that the reply has that heading and the header row `| | Before this change | Now (tested) |`. If it does not, add the table first.
 
 1. Search the output for `✖`, `✕`, `FAIL`, `ERROR` and `error TS`.
-2. Name the mode that you ran. In changed mode, list the test files that you ran.3. Name each failed check and its first error. If a failure is outside the changed code, say so, and do not call it a regression without a run on the base branch.
+2. Name the mode that you ran. In changed mode, list the test files that you ran.
+3. Name each failed check and its first error. If a failure is outside the changed code, say so, and do not call it a regression without a run on the base branch.
 4. Never say "pass" without the summary line of the runner, such as `ℹ pass N` / `ℹ fail 0` or `Tests: N passed`.
 5. Always write a "Before / Now" table of what the change does, in both modes. Use one row for each behaviour that the branch changes. Use the format below.
 

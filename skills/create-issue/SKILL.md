@@ -219,6 +219,13 @@ Split `Done when` into two groups:
 | Platforms | Web and mobile, each browser or screen size that the team supports |
 | Regression | The old flows near the change still work, and the other platform still works |
 
+**A flow with states needs a state table.** A payment, a subscription, a session, a job or a
+conversation turn moves through states. Put a table in **Proposed approach**: one row for
+each state and each event that can occur in it (success, failure, a lost notice, a retry, a
+cancel, an expiry, a second message), with the expected result. Write one edge-case box for
+each row that is not the happy path. Without the table, the team finds each row later as a
+bug.
+
 Each edge-case box gives the expected result too, such as an exact error message or "the
 button stays disabled". When the expected result is not decided, add it to
 **Open questions** and write "Expected result: to be decided".
@@ -260,6 +267,11 @@ last release. Give the reader the context to understand the problem.>
 ## Evidence
 <Screenshots, links, trace ids, log lines. Put the error text in a code block.>
 
+## Same problem in other places
+<Each other platform, channel, role or flow that does the same thing, and can have the same
+problem. Write "Checked: works" or "Not checked" for each one. This is a list of places to
+test, not a cause.>
+
 ## Done when
 **Happy path**
 - [ ] <the steps to reproduce. Expected result: the **Expected** text>
@@ -300,6 +312,10 @@ and what that costs: time, money, errors, support messages.>
 ## Proposed approach
 <How to build it: the parts that change, the new data, the new settings. Give the other
 options and why this issue does not use them.>
+
+## Existing behaviour at risk
+- <an existing flow, screen or caller that uses the parts that change, and what must stay the
+  same. Each line gets a regression box in `Done when`>
 
 ## Open questions
 - <a decision that the team must make before or during the work, or "None">

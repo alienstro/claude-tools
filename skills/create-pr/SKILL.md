@@ -31,6 +31,11 @@ Nothing else. Write it in simple, everyday words for a reader who does not know 
    If a Before or an After shot is missing or bad, STOP and tell the user. Do not open the PR without it.
 3. Confirm the base branch and scope with the user before pushing or opening — the user drives
    git history, so never assume. Flag anything unusual (wrong base, unrelated commits).
+   If the repository has more than one long-lived integration branch, and the change is
+   also necessary on a branch that is not the base, tell the user now. Add one last bullet
+   to the summary that names that branch and how the change gets there (a later merge of
+   the base, or a second PR). A fix that lands on one branch only comes back as a bug on
+   the other.
 4. Push the branch if needed: `git push -u origin <branch>`.
 5. Write the title and body in the format below.
 6. Open the PR with `gh pr create --base <base> --title "<title>" --body-file <body.md>`. Add one

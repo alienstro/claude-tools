@@ -25,6 +25,16 @@ When the file does not exist, or names a different repository, read the `AGENTS.
 `CLAUDE.md` of the repository for the gate command and the test rules. Get the Orca repo id
 from `orca repo list --json`. Ask the user for a value that you cannot find.
 
+## Does CI run on the PR target?
+
+Do not assume that CI checks the PR. Many repositories run CI only for a PR to the default
+branch. Read `on.pull_request` in each file of `.github/workflows/` (or the CI file of the
+host), and look for the PR target in `branches`. The workflow file wins over a sentence in
+`team.local.md` or `AGENTS.md`.
+
+When no workflow runs for the PR target, `/do-tests` is the only check before the merge. Say
+this in the report of the handoff, so that the user knows it.
+
 ## Caution: a second session uses memory
 
 Each new agent session uses its own memory and CPU. On a small machine, start a session
@@ -161,6 +171,13 @@ Do not change: <the out-of-scope parts, by name>.
 Update these docs: <the docs that state the rule that changes>.
 
 Rules: follow AGENTS.md. Use test-driven development: change or add tests first.
+Before you change code, list the existing behaviour that the change can affect: the callers
+of each function that you change, the state that they share, and the user texts that they show.
+Run the tests of those parts first, so that you know that they pass before your change.
+Write one test for each "Done when" item. For a bug, the test must fail before the fix.
+Search the repository for the same problem in other places: each platform, channel, role and
+flow that has the same logic. Fix the shared code one time. If you do not fix a place, name it
+under "Not done".
 <the test limits of the repository, from team.local.md or AGENTS.md>.
 <the ending of the mode, from below>
 Do not spawn subagents, except the reviewers that /code-review starts.
@@ -178,16 +195,23 @@ Do not push and do not open a PR.
 ### Ending: PR mode
 
 ```text
-When the work is done, do these four steps in this order:
+When the work is done, do these five steps in this order:
 1. Run `git add -N .` so that the review sees new files. Then run /code-review medium --fix.
    Fix each finding that it reports. Skip a false finding, and give the reason in the report.
-   Do not ask the user which findings to fix. One review round only.
-2. Run /do-tests. It checks only the code that you changed. If a check fails, fix it,
-   and run /do-tests again. Do not go to step 3 while a check fails.
+   Do not ask the user which findings to fix. One review round only. Use `high` in place of
+   `medium` when the change touches money, sign-in, permissions, a data migration or the
+   states of a flow.
+2. Run /do-tests. It checks the code that you changed and the tests that read it. If a
+   check fails, fix it, and run /do-tests again. Do not go to step 3 while a check fails.
+   When the change touches a build file, a container file, a deploy workflow, an installer
+   or a new entry point of the app, run /do-ci in place of /do-tests.
 3. Run /create-commit on branch <branch>. Use no AI attribution trailer.
 4. Run /create-pr with the base branch <PR target>. The user approved the push and the PR
    to <PR target> in advance: this brief is that approval, so do not stop to ask for it.
    The PR links no issue. Use no AI attribution line in the PR body.
+5. Read the checks of the PR with `gh pr checks <PR>`. If the PR has checks, wait for them
+   with `gh pr checks <PR> --watch`, and fix a failed check. If the PR has no checks, write
+   "none run on this PR" in the Checks row of the report.
 If /do-tests still fails after two fix rounds, do not push. Commit the work, and
 report the failed check and its output.
 ```
@@ -208,9 +232,11 @@ PR: <the full PR URL on its own line>  (Local mode: Commit: <short SHA> on <bran
 | Item | Result |
 |---|---|
 | Branch | <branch> -> <PR target> |
-| Done when | <each "Done when" check: pass or fail> |
+| Done when | <each item with the test that proves it, or "not tested"> |
 | Tests | <the pass and fail counts from the last test run> |
 | Review | <the findings that /code-review fixed and skipped, or "Local mode: none"> |
+| Other places | <each place with the same problem: fixed, or not fixed and why. Or "None found"> |
+| Checks | <the PR checks: passed, failed, or "none run on this PR". Local mode: "none"> |
 | Not done | <each item that you could not do, or "None"> |
 
 Changed files:
@@ -234,4 +260,4 @@ Change other rules only when the user asks.
 | You stop after the report | The user must ask "is it done?" | Run the step 9 watch until it exits |
 | You poll the terminal yourself every minute | Each check uses tokens and context | Run the watch as one background command |
 | PR mode with no approval line in the brief | `/create-pr` stops to confirm the base, and the agent waits for nobody | Keep the "approved in advance" line |
-| PR mode with `pnpm run verify` as the gate | Turbo with no limits runs many tasks at once and lags the machine | Use `/do-tests`, which checks only the changed code. CI runs `pnpm run verify` on the PR |
+| PR mode with `pnpm run verify` as the gate | Turbo with no limits runs many tasks at once and lags the machine | Use `/do-tests`. Do not assume that CI runs on the PR. See "Does CI run on the PR target?" |
